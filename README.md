@@ -25,8 +25,8 @@ The analysis then assigns a unique numerical identifier (i.e., tags)
 to each source and it relies on
 the [Clam static analyzer](https://github.com/seahorn/clam) to
 propagate those tags across memory and function boundaries. The output
-of the analysis is to infer for each sink the set of all possible
-tags. With this, each sink can be connected to a subset of
+of the analysis maps each sink to a set with all possible
+tags. With this, each sink is connected back to a subset of
 sources. Currently, this output is encoded as metadata named
 `clam-prov-tags`. For instance:
 
