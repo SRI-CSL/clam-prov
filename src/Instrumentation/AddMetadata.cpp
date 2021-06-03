@@ -1,20 +1,3 @@
-/*
- --------------------------------------------------------------------------------
- SPADE - Support for Provenance Auditing in Distributed Environments.
- Copyright (C) 2021 SRI International
- This program is free software: you can redistribute it and/or
- modify it under the terms of the GNU General Public License as
- published by the Free Software Foundation, either version 3 of the
- License, or (at your option) any later version.
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- General Public License for more details.
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>.
- --------------------------------------------------------------------------------
-*/
-
 #include "AddMetadata.h"
 
 #include "llvm/IR/IRBuilder.h"
@@ -51,6 +34,8 @@ static cl::opt<bool> debug(
     cl::desc(
         "Print added or existing metadata as it is added for sanity check"),
     cl::cat(ClamProvOpts));
+
+namespace clam_prov {
 
 static int outputMode;
 static std::ofstream outputFile;
@@ -495,6 +480,10 @@ bool LegacyAddMetadata::runOnModule(llvm::Module &M) {
   return Changed;
 }
 
+char LegacyAddMetadata::ID = 0;
+
+} // end namespace clam_prov
+
 //-----------------------------------------------------------------------------
 // New PM Registration
 //-----------------------------------------------------------------------------
@@ -505,7 +494,7 @@ llvm::PassPluginLibraryInfo getAddMetadataPluginInfo() {
                 [](StringRef Name, ModulePassManager &MPM,
                    ArrayRef<PassBuilder::PipelineElement>) {
                   if (Name == "add-metadata") {
-                    MPM.addPass(AddMetadata());
+                    MPM.addPass(clam_prov::AddMetadata());
                     return true;
                   }
                   return false;
@@ -521,10 +510,9 @@ llvmGetPassPluginInfo() {
 //-----------------------------------------------------------------------------
 // Legacy PM Registration
 //-----------------------------------------------------------------------------
-char LegacyAddMetadata::ID = 0;
 
 // Register the pass - required for (among others) opt
-static RegisterPass<LegacyAddMetadata> X(/*PassArg=*/"legacy-add-metadata",
-                                         /*Name=*/"LegacyAddMetadata",
-                                         /*CFGOnly=*/false,
-                                         /*is_analysis=*/false);
+static RegisterPass<clam_prov::LegacyAddMetadata> X(/*PassArg=*/"legacy-add-metadata",
+						    /*Name=*/"LegacyAddMetadata",
+						    /*CFGOnly=*/false,
+						    /*is_analysis=*/false);

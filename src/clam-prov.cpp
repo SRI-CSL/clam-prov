@@ -40,7 +40,7 @@
 #include "crab/domains/flat_boolean_domain.hpp"
 #include "crab/domains/region_domain.hpp"
 
-#include "./Instrumentation/AddMetadata/AddMetadata.h"
+#include "./Instrumentation/AddMetadata.h"
 #include "./Instrumentation/AnnotateSources.h"
 #include "./Instrumentation/OutputResults.h"
 #include "./Instrumentation/WrapSinks.h"
@@ -121,7 +121,7 @@ static void preTagAnalysis(Module &M) {
   // -- remove ptrtoint and inttoptr instructions
   pm.add(seadsa::createRemovePtrToIntPass());
   // -- must be the last ones before running crab.
-  pm.add(clam::createLowerSelectPass());
+  //pm.add(clam::createLowerSelectPass());
   // -- ensure one single exit point per function
   //    LowerUnsignedICmpPass and LowerSelect can add multiple
   //    returns.
@@ -129,7 +129,7 @@ static void preTagAnalysis(Module &M) {
   pm.add(new clam::NameValues());
 
   /// === Specific passes for the Tag analysis ==== ///
-  pm.add(new LegacyAddMetadata());
+  pm.add(new clam_prov::LegacyAddMetadata());
   pm.add(new clam_prov::addSources());
   pm.add(new clam_prov::WrapSinks());
 
