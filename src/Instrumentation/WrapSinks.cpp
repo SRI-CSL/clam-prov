@@ -41,7 +41,8 @@ FunctionCallee WrapSinks::createWrapper(CallBase &CB) {
     Arg.setName("param");
     Params.push_back(&Arg);
   }
-  CallInst *OrigCall = Builder.CreateCall(type, &F, Params, "res");
+  CallInst *OrigCall = Builder.CreateCall(type, &F, Params,
+					  (type->getReturnType()->isVoidTy() ? "" : "res"));
   OrigCall->copyMetadata(CB);
   Builder.SetInsertPoint(OrigCall); // before OrigCall
   Value *castedPtr = Builder.CreateBitOrPointerCast(
