@@ -44,6 +44,7 @@
 #include "./Instrumentation/AnnotateSources.h"
 #include "./Instrumentation/OutputResults.h"
 #include "./Instrumentation/WrapSinks.h"
+#include "./Instrumentation/OutputDependencyMap.h"
 
 using namespace clam;
 using namespace llvm;
@@ -140,6 +141,7 @@ static void postTagAnalysis(Module &M) {
   llvm::legacy::PassManager pm;
   // -- remove special calls to __CRAB_intrinsic_add_tag, and sea_dsa_set_modified
   pm.add(new clam_prov::removeSources());
+  pm.add(new clam_prov::LegacyOutputDependencyMap());
   pm.run(M);
 }
 

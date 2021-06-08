@@ -68,7 +68,7 @@ cmake --build . --target install
 ```
 clang -Xclang -disable-O0-optnone -c -emit-llvm test1.c -o test1.bc
 clam-pp --crab-devirt test1.bc -o test1.pp.bc
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config -o test1.out.pp.bc
+clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output -o test1.out.pp.bc
 
 ```
 
