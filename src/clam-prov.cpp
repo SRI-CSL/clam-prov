@@ -138,7 +138,7 @@ static void preTagAnalysis(Module &M) {
 
 static void postTagAnalysis(Module &M) {
   llvm::legacy::PassManager pm;
-  // -- remove special calls to __CRAB_intrinsic_add_tag
+  // -- remove special calls to __CRAB_intrinsic_add_tag, and sea_dsa_set_modified
   pm.add(new clam_prov::removeSources());
   pm.run(M);
 }
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
 
   /// 5. Remove instrumentation added at step 1.
   /// TODO:
-  //  postTagAnalysis(*module);
+  postTagAnalysis(*module);
 
   if (!OutputFilename.empty()) {
     llvm::legacy::PassManager pm;

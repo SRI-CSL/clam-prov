@@ -101,7 +101,7 @@ bool removeSources::runOnFunction(Function &F) {
         if (f == NULL)
           continue;
 
-        if (f->getName() == "__CRAB_intrinsic_add_tag") {
+        if (f->getName() == "__CRAB_intrinsic_add_tag" || f->getName() == "sea_dsa_set_modified") {
           toerase.push_front(ci);
         }
       }
