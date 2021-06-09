@@ -18,7 +18,7 @@ add_llvm_executable(clam-prov DISABLE_LLVM_LINK_LLVM_DYLIB
   Instrumentation/AnnotateSources.cpp
   Instrumentation/WrapSinks.cpp  
   Instrumentation/OutputResults.cpp
-  Instrumentation/ReadMetadata.cpp
+  Instrumentation/ProvMetadata.cpp
   Instrumentation/AddMetadata.cpp
   Instrumentation/OutputDependencyMap.cpp
   )

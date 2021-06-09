@@ -1,4 +1,5 @@
-#include "OutputDependencyMap.h"
+#include "./OutputDependencyMap.h"
+#include "./ProvMetadata.h"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -24,9 +25,6 @@ static cl::opt<std::string>
 
 namespace clam_prov {
 
-static StringRef keyMetadataCallSite("call-site-metadata");
-static StringRef keyMetadataClamProv("clam-prov-tags");
-
 bool OutputDependencyMap::runOnModule(Module &module) {
   if (dependencyMapFile.empty()) {
     return false;
@@ -44,48 +42,26 @@ bool OutputDependencyMap::runOnModule(Module &module) {
     for (BasicBlock &basicBlock : function) {
       for (Instruction &instruction : basicBlock) {
 
-        // input
-        MDNode *mdNodeCallSite = instruction.getMetadata(keyMetadataCallSite);
-        if (mdNodeCallSite != nullptr) {
-          if (mdNodeCallSite->getNumOperands() > 0) {
-            if (CallBase *callBase = dyn_cast<CallBase>(&instruction)) {
-              Function *function = callBase->getCalledFunction();
-              if (function != nullptr && function->hasName()) {
-                StringRef functionName = function->getName();
-                MDNode::op_iterator callSiteIterator = mdNodeCallSite->op_begin();
-                if (MDString *callSiteString = dyn_cast<MDString>(*callSiteIterator)) {
-                  APInt callSite;
-                  if (!callSiteString->getString().getAsInteger(10, callSite)) {
-                    outputFile << "call-site," << functionName.data() << "," << callSite.getZExtValue() << "\n";
-                  }
-                }
-              }
+        if (CallBase *callBase = dyn_cast<CallBase>(&instruction)) {
+          Function *function = callBase->getCalledFunction();
+          if (function != nullptr && function->hasName()) {
+            // input
+            MDNode *callSiteNode = nullptr;
+            long long callSiteId;
+            if (getCallSiteMetadata(*callBase, callSiteNode, callSiteId)) {
+              outputFile << "call-site," << function->getName().data() << "," << callSiteId << "\n";
             }
-          }
-        }
 
-        // output
-        MDNode *mdNodeClamProv = instruction.getMetadata(keyMetadataClamProv);
-        if (mdNodeClamProv != nullptr) {
-          if (mdNodeClamProv->getNumOperands() > 0) {
-            if (CallBase *callBase = dyn_cast<CallBase>(&instruction)) {
-              Function *function = callBase->getCalledFunction();
-              if (function != nullptr && function->hasName()) {
-                StringRef functionName = function->getName();
-                MDNode::op_iterator clamProvIterator = mdNodeClamProv->op_begin();
-                MDNode::op_iterator clamProvIteratorEnd = mdNodeClamProv->op_end();
-                outputFile << "tags," << functionName.data();
-                while (clamProvIterator != clamProvIteratorEnd) {
-                  if (ConstantAsMetadata *mdTag = dyn_cast<ConstantAsMetadata>(*clamProvIterator)) {
-                    if (ConstantInt *constantIntTag = dyn_cast<ConstantInt>(mdTag->getValue())) {
-                      outputFile << "," << constantIntTag->getValue().getZExtValue();
-                    }
-                  }
-                  clamProvIterator++;
-                }
-                outputFile << "\n";
+            // output
+            SmallVector<long long, 16> tagVector;
+            if (getClamProvTags(*callBase, tagVector)) {
+              outputFile << "tags," << function->getName().data();
+              for (long long tag : tagVector) {
+                outputFile << "," << tag;
               }
+              outputFile << "\n";
             }
+
           }
         }
 

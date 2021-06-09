@@ -1,5 +1,5 @@
 #include "./AnnotateSources.h"
-#include "./ReadMetadata.h"
+#include "./ProvMetadata.h"
 
 #include "llvm/IR/IRBuilder.h"
 
@@ -63,7 +63,7 @@ bool addSources::runOnFunction(Function &F) {
         long long callId;
         unsigned long long callArg; // starts from 1
         bool isInput;
-        if (extractProvenanceFromCallsite(*CB, callId, callArg, isInput)) {
+        if (getCallSiteMetadataAndFirstArgumentType(*CB, callId, callArg, isInput)) {
           if (isInput) {
             Changed = true;
             insertClamAddTag(callId, *(CB->getArgOperand(callArg - 1)), CB);

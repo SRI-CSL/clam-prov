@@ -1,4 +1,5 @@
-#include "AddMetadata.h"
+#include "./AddMetadata.h"
+#include "./ProvMetadata.h"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -29,12 +30,6 @@ static cl::opt<std::string>
                        cl::desc("Output specifier for the pass"),
                        cl::ValueRequired, cl::cat(ClamProvOpts));
 
-static cl::opt<bool> debug(
-    "add-metadata-debug", cl::init(false), cl::Optional,
-    cl::desc(
-        "Print added or existing metadata as it is added for sanity check"),
-    cl::cat(ClamProvOpts));
-
 namespace clam_prov {
 
 static int outputMode;
@@ -44,17 +39,6 @@ static void writeOutput(long counter, StringRef functionName,
 static void closeOutput();
 static bool openOutput();
 static bool loadInputFile(Module &M, std::string inputFilePath);
-
-void parseCallSiteMetadata(Instruction *instruction,
-                           void (*metadata_callback)(Instruction *instruction,
-                                                     StringRef *functionName,
-                                                     APInt *callSiteNumber,
-                                                     APInt *parameterIndex,
-                                                     StringRef *description));
-
-static StringRef metadataKey("call-site-metadata");
-static StringRef metadataKeyIdentifier("call-site-identifier");
-static StringRef metadataKeyDescription("call-site-description");
 
 struct ParamInfo {
   bool useIndex;
@@ -69,7 +53,6 @@ struct FunctionInfo {
 
 static StringMap<FunctionInfo> functionInfos;
 
-static StringMap<long> descriptionCounter;
 static long callSiteCounter;
 
 static struct FunctionInfo *getFunctionInfo(StringRef functionName) {
@@ -96,17 +79,7 @@ static struct FunctionInfo *initFunctionInfo(StringRef functionName) {
   return &functionInfos[functionName];
 }
 
-static long getNextDescriptionCounter(char *description) {
-  /*
-  StringRef str(description);
-  if(descriptionCounter.find(str) == descriptionCounter.end()){
-          descriptionCounter[str] = -1;
-  }
-  long currentValue = descriptionCounter[str];
-  currentValue++;
-  descriptionCounter[str] = currentValue;
-  return currentValue;
-  */
+static long getNextCallSiteCounter() {
   return callSiteCounter++;
 }
 
@@ -225,66 +198,6 @@ static bool loadInputFile(Module &M, std::string inputFilePath) {
   return true;
 }
 
-void parseCallSiteMetadata(Instruction *instruction,
-                           void (*metadata_callback)(Instruction *instruction,
-                                                     StringRef *functionName,
-                                                     APInt *callSiteNumber,
-                                                     APInt *parameterIndex,
-                                                     StringRef *description)) {
-  if (!instruction) {
-    return;
-  }
-  MDNode *callSiteNode = instruction->getMetadata(metadataKey);
-  if (!callSiteNode) {
-    return;
-  }
-  if (callSiteNode->getNumOperands() == 0) {
-    return;
-  }
-  StringRef functionName;
-  if (CallBase *callBase = dyn_cast<CallBase>(instruction)) {
-    Function *function = callBase->getCalledFunction();
-    if (function == nullptr || !function->hasName()) {
-      return;
-    }
-    functionName = function->getName();
-  }
-  // Format: call-site-metadata = (<call site>, (<param>, <desc>[, <desc>])[,
-  // (<param>, <desc>[, <desc>])])
-  MDNode::op_iterator callSiteIterator = callSiteNode->op_begin();
-  MDNode::op_iterator callSiteIteratorEnd = callSiteNode->op_end();
-  if (MDString *callSiteString = dyn_cast<MDString>(*callSiteIterator)) {
-    APInt callSite;
-    if (callSiteString->getString().getAsInteger(10, callSite)) {
-      return;
-    }
-    callSiteIterator++;
-    while (callSiteIterator != callSiteIteratorEnd) {
-      if (MDTuple *paramTuple = dyn_cast<MDTuple>(*callSiteIterator)) {
-        MDNode::op_iterator paramTupleIterator = paramTuple->op_begin();
-        MDNode::op_iterator paramTupleIteratorEnd = paramTuple->op_end();
-        if (MDString *paramString = dyn_cast<MDString>(*paramTupleIterator)) {
-          APInt param;
-          if (paramString->getString().getAsInteger(10, param)) {
-            return;
-          }
-          paramTupleIterator++;
-          while (paramTupleIterator != paramTupleIteratorEnd) {
-            if (MDString *descString =
-                    dyn_cast<MDString>(*paramTupleIterator)) {
-              StringRef description = descString->getString();
-              metadata_callback(instruction, &functionName, &callSite, &param,
-                                &description);
-            }
-            paramTupleIterator++;
-          }
-        }
-      }
-      callSiteIterator++;
-    }
-  }
-}
-
 static bool conditionalUpdate(Instruction *current, Module &module) {
   bool updated = false;
   if (current == nullptr) {
@@ -304,9 +217,9 @@ static bool conditionalUpdate(Instruction *current, Module &module) {
       return updated;
     }
 
-    long counter = getNextDescriptionCounter(nullptr);
+    long counter = getNextCallSiteCounter();
 
-    StringMap<std::vector<Metadata *>> paramToDesc;
+    StringMap<SmallVector<std::string *, 4>> paramToDesc;
 
     for (struct ParamInfo &paramInfo : functionInfo->paramInfos) {
       Value *operand = nullptr;
@@ -334,28 +247,18 @@ static bool conditionalUpdate(Instruction *current, Module &module) {
       writeOutput(counter, functionName, &paramKey, &paramInfo.description[0]);
 
       if (paramToDesc.find(paramKey.c_str()) == paramToDesc.end()) {
-        std::vector<Metadata *> list;
-        list.push_back(MDString::get(llvmContext, paramKey));
+        SmallVector<std::string *, 4> list;
+        list.push_back(&paramKey);
         paramToDesc[paramKey.c_str()] = list;
       }
 
-      std::vector<Metadata *> *list = &paramToDesc[paramKey.c_str()];
-      list->push_back(
-          MDString::get(llvmContext, std::string(&paramInfo.description[0])));
+      SmallVectorImpl<std::string *> *list = &paramToDesc[paramKey.c_str()];
+      std::string descString = std::string(&paramInfo.description[0]);
+      list->push_back(&descString);
 
-      updated = true;
     }
 
-    std::vector<Metadata *> callSiteTuple;
-    callSiteTuple.push_back(
-        MDString::get(llvmContext, std::to_string(counter)));
-    for (auto const &entry : paramToDesc) {
-      std::vector<Metadata *> *list = &paramToDesc[entry.first()];
-      MDTuple *paramTuple = MDTuple::get(llvmContext, *list);
-      callSiteTuple.push_back(paramTuple);
-    }
-    MDNode *callSiteNode = MDNode::get(llvmContext, callSiteTuple);
-    current->setMetadata(metadataKey, callSiteNode);
+    updated = setCallSiteMetadata(llvmContext, *callBase, counter, paramToDesc);
   }
   return updated;
 }
@@ -399,31 +302,6 @@ static void closeOutput() {
   }
 }
 
-static void debug_metadata_callback(Instruction *instruction,
-                                    StringRef *functionName,
-                                    APInt *callSiteNumber,
-                                    APInt *parameterIndex,
-                                    StringRef *description) {
-  errs() << "[DEBUG::" << DEBUG_TYPE << "] function=" << *functionName
-         << ", callSite=" << *callSiteNumber << ", param=" << *parameterIndex
-         << ", description=" << *description << "\n";
-}
-
-static void extractAllMetadata(
-    Module &module,
-    void (*metadata_callback_func)(Instruction *instruction,
-                                   StringRef *functionName,
-                                   APInt *callSiteNumber, APInt *parameterIndex,
-                                   StringRef *description)) {
-  for (Function &function : module) {
-    for (BasicBlock &basicBlock : function) {
-      for (Instruction &current : basicBlock) {
-        parseCallSiteMetadata(&current, metadata_callback_func);
-      }
-    }
-  }
-}
-
 bool AddMetadata::runOnModule(Module &module) {
   std::string inputFilePath =
       configFilePathOption == "" ? "" : configFilePathOption.getValue().c_str();
@@ -453,15 +331,6 @@ bool AddMetadata::runOnModule(Module &module) {
   }
 
   closeOutput();
-
-  if (debug == true) {
-    void (*metadata_callback_func)(
-        Instruction * instruction, StringRef * functionName,
-        APInt * callSiteNumber, APInt * parameterIndex,
-        StringRef * description);
-    metadata_callback_func = &debug_metadata_callback;
-    extractAllMetadata(module, metadata_callback_func);
-  }
 
   return updated;
 }

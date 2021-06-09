@@ -1,5 +1,5 @@
 #include "./WrapSinks.h"
-#include "./ReadMetadata.h"
+#include "./ProvMetadata.h"
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -98,7 +98,7 @@ bool WrapSinks::runOnFunction(Function &F) {
         long long callId /*unused*/;
         unsigned long long callArg;
         bool isInput;
-        if (extractProvenanceFromCallsite(*CB, callId, callArg, isInput)) {
+        if (getCallSiteMetadataAndFirstArgumentType(*CB, callId, callArg, isInput)) {
           if (!isInput) {
             callsToWrap.push_back(CB);
             m_outputParamMap[CB] = callArg - 1;
