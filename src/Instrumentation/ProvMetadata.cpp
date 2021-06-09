@@ -9,6 +9,23 @@ namespace clam_prov {
 static StringRef metadataKeyCallSite("call-site-metadata");
 static StringRef keyMetadataClamProv("clam-prov-tags");
 
+static ConstantAsMetadata* getIntegerAsMetadata(llvm::LLVMContext &ctx, long long value){
+  IntegerType *int64Ty = Type::getInt64Ty(ctx);
+  Constant *c = cast<Constant>(ConstantInt::get(int64Ty, value));
+  ConstantAsMetadata *cMetadata = ConstantAsMetadata::get(c);
+  return cMetadata;
+}
+
+static bool getIntegerFromMetadata(const Metadata *metadata, long long &value){
+  if (const ConstantAsMetadata *constantMetadata = dyn_cast<ConstantAsMetadata>(metadata)) {
+    if (ConstantInt *constantInt = dyn_cast<ConstantInt>(constantMetadata->getValue())) {
+      value = constantInt->getValue().getZExtValue();
+      return true;
+    }
+  }
+  return false;
+}
+
 unsigned int getCallSiteArgumentMetadataCount (const llvm::CallBase &CB) {
   if (MDNode *callSiteNode = CB.getMetadata(metadataKeyCallSite)) {
     unsigned int result = callSiteNode->getNumOperands();
@@ -27,8 +44,7 @@ unsigned int getCallSiteArgumentMetadataCount (const llvm::CallBase &CB) {
 bool getCallSiteMetadata(const llvm::CallBase &CB, llvm::MDNode *&callSiteMetadata, long long &callSiteId){
   MDNode *callSiteNode = CB.getMetadata(metadataKeyCallSite);
   if (callSiteNode != nullptr && callSiteNode->getNumOperands() > 0) {
-    MDString *callSiteString = dyn_cast<MDString>(callSiteNode->getOperand(0));
-    if (callSiteString != nullptr && !getAsSignedInteger(callSiteString->getString(), 10, callSiteId)) {
+    if (getIntegerFromMetadata(callSiteNode->getOperand(0), callSiteId)) {
       callSiteMetadata = callSiteNode;
       return true;
     }
@@ -99,7 +115,7 @@ bool getCallSiteMetadataAndFirstArgumentType (const llvm::CallBase &CB,
 bool setCallSiteMetadata(llvm::LLVMContext &ctx, llvm::CallBase &CB,
                           long long callSiteId, llvm::StringMap<llvm::SmallVector<std::string *, 4>> paramToLabel){
   std::vector<Metadata *> callSiteTuple;
-  callSiteTuple.push_back(MDString::get(ctx, std::to_string(callSiteId)));
+  callSiteTuple.push_back(getIntegerAsMetadata(ctx, callSiteId));
 
   std::vector<Metadata *> mdList;
   for (auto const &entry : paramToLabel) {
@@ -124,10 +140,9 @@ bool getClamProvTags (const llvm::CallBase &CB, llvm::SmallVectorImpl<long long>
       MDNode::op_iterator clamProvIterator = mdNodeClamProv->op_begin();
       MDNode::op_iterator clamProvIteratorEnd = mdNodeClamProv->op_end();
       while (clamProvIterator != clamProvIteratorEnd) {
-        if (ConstantAsMetadata *mdTag = dyn_cast<ConstantAsMetadata>(*clamProvIterator)) {
-          if (ConstantInt *constantIntTag = dyn_cast<ConstantInt>(mdTag->getValue())) {
-            tags.push_back(constantIntTag->getValue().getZExtValue());
-          }
+        long long value;
+        if (getIntegerFromMetadata((&*clamProvIterator)->get(), value)) {
+            tags.push_back(value);
         }
         clamProvIterator++;
       }
@@ -140,9 +155,7 @@ bool getClamProvTags (const llvm::CallBase &CB, llvm::SmallVectorImpl<long long>
 bool setClamProvTags (llvm::LLVMContext &ctx, llvm::CallBase &CB, llvm::SmallVectorImpl<long long> &tags) {
   SmallVector<Metadata *, 4> tagOperands;
   for (long long t : tags) {
-    IntegerType *int64Ty = Type::getInt64Ty(ctx);
-    Constant *c = cast<Constant>(ConstantInt::get(int64Ty, t));
-    ConstantAsMetadata *cMetadata = ConstantAsMetadata::get(c);
+    ConstantAsMetadata *cMetadata = getIntegerAsMetadata(ctx, t);
     tagOperands.push_back(cMetadata);
   }
   MDNode *tagNode = MDNode::get(ctx, tagOperands);
