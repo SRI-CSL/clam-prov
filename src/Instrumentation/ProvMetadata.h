@@ -89,7 +89,7 @@ bool getCallSiteMetadataAndFirstArgumentType (const llvm::CallBase &CB,
   Always returns 'true' i.e. overwrites if any metadata previously existed.
 */
 bool setCallSiteMetadata(llvm::LLVMContext &ctx, llvm::CallBase &CB,
-                          long long callSiteId, llvm::StringMap<llvm::SmallVector<std::string *, 4>> paramToLabel);
+                          long long callSiteId, llvm::StringMap<llvm::SmallVector<char *, 4>> paramToLabel);
 
 /*
   Gets the clam prov tags (if any) in the vector 'tags'

@@ -219,7 +219,7 @@ static bool conditionalUpdate(Instruction *current, Module &module) {
 
     long counter = getNextCallSiteCounter();
 
-    StringMap<SmallVector<std::string *, 4>> paramToDesc;
+    StringMap<SmallVector<char *, 4>> paramToLabels;
 
     for (struct ParamInfo &paramInfo : functionInfo->paramInfos) {
       Value *operand = nullptr;
@@ -246,19 +246,16 @@ static bool conditionalUpdate(Instruction *current, Module &module) {
 
       writeOutput(counter, functionName, &paramKey, &paramInfo.description[0]);
 
-      if (paramToDesc.find(paramKey.c_str()) == paramToDesc.end()) {
-        SmallVector<std::string *, 4> list;
-        list.push_back(&paramKey);
-        paramToDesc[paramKey.c_str()] = list;
+      if (paramToLabels.find(paramKey.c_str()) == paramToLabels.end()) {
+        SmallVector<char *, 4> list;
+        paramToLabels[paramKey.c_str()] = list;
       }
 
-      SmallVectorImpl<std::string *> *list = &paramToDesc[paramKey.c_str()];
-      std::string descString = std::string(&paramInfo.description[0]);
-      list->push_back(&descString);
-
+      SmallVectorImpl<char *> *list = &paramToLabels[paramKey.c_str()];
+      list->push_back(&paramInfo.description[0]);
     }
 
-    updated = setCallSiteMetadata(llvmContext, *callBase, counter, paramToDesc);
+    updated = setCallSiteMetadata(llvmContext, *callBase, counter, paramToLabels);
   }
   return updated;
 }

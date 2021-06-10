@@ -113,19 +113,19 @@ bool getCallSiteMetadataAndFirstArgumentType (const llvm::CallBase &CB,
 }
 
 bool setCallSiteMetadata(llvm::LLVMContext &ctx, llvm::CallBase &CB,
-                          long long callSiteId, llvm::StringMap<llvm::SmallVector<std::string *, 4>> paramToLabel){
+                          long long callSiteId, llvm::StringMap<llvm::SmallVector<char *, 4>> paramToLabel){
   std::vector<Metadata *> callSiteTuple;
   callSiteTuple.push_back(getIntegerAsMetadata(ctx, callSiteId));
 
-  std::vector<Metadata *> mdList;
   for (auto const &entry : paramToLabel) {
-    llvm::SmallVectorImpl<std::string *> *list = &paramToLabel[entry.first()];
-    for (std::string *strPtr : *list) {
-      mdList.push_back(MDString::get(ctx, *strPtr));
+    std::vector<Metadata *> mdList;
+    llvm::SmallVectorImpl<char *> *list = &paramToLabel[entry.first()];
+    mdList.push_back(MDString::get(ctx, entry.first()));
+    for (char *strPtr : *list) {
+      mdList.push_back(MDString::get(ctx, strPtr));
     }
     MDTuple *paramTuple = MDTuple::get(ctx, mdList);
     callSiteTuple.push_back(paramTuple);
-    mdList.clear();
   }
 
   MDNode *callSiteNode = MDNode::get(ctx, callSiteTuple);
