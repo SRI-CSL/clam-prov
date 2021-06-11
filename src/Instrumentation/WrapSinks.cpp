@@ -45,10 +45,13 @@ FunctionCallee WrapSinks::createWrapper(CallBase &CB) {
 					  (type->getReturnType()->isVoidTy() ? "" : "res"));
   OrigCall->copyMetadata(CB);
   Builder.SetInsertPoint(OrigCall); // before OrigCall
-  Value *castedPtr = Builder.CreateBitOrPointerCast(
-      wrapperF->getArg(m_outputParamMap[&CB]), m_int8PtrTy);
-  Builder.CreateCall(m_seadsaModified.getFunctionType(),
-                     m_seadsaModified.getCallee(), {castedPtr});
+
+  for (unsigned argIndex : m_outputParamMap[&CB]) {
+    Value *castedPtr = Builder.CreateBitOrPointerCast(
+        wrapperF->getArg(argIndex), m_int8PtrTy);
+    Builder.CreateCall(m_seadsaModified.getFunctionType(),
+                       m_seadsaModified.getCallee(), {castedPtr});
+  }
 
   Builder.SetInsertPoint(ExitBB); // at the end of the block
   if (type->getReturnType()->isVoidTy()) {
@@ -95,16 +98,30 @@ bool WrapSinks::runOnFunction(Function &F) {
         if (!CB->getCalledFunction()) {
           continue;
         }
+
         long long callId /*unused*/;
-        unsigned long long callArg;
+        unsigned long long callArg; // starts from 1
         bool isInput;
-        if (getCallSiteMetadataAndFirstArgumentType(*CB, callId, callArg, isInput)) {
-          if (!isInput) {
-            callsToWrap.push_back(CB);
-            m_outputParamMap[CB] = callArg - 1;
-            Change = true;
+
+        unsigned int argumentMetadataCount = getCallSiteArgumentMetadataCount(*CB);
+        for (int i = 0; i < argumentMetadataCount; i++) {
+          MDTuple *argumentMetadata;
+          if (getCallSiteArgumentMetadata(i, *CB, callId, callArg, argumentMetadata)) {
+            if (getArgumentMetadataType(argumentMetadata, isInput)) {
+              if (!isInput) {
+                Change = true;
+                if (m_outputParamMap.find(CB) == m_outputParamMap.end()) {
+                  callsToWrap.push_back(CB);
+                  SmallVector<unsigned, 4> list;
+                  m_outputParamMap[CB] = list;
+                }
+                SmallVectorImpl<unsigned> *list = &m_outputParamMap[CB];
+                list->push_back(callArg - 1);
+              }
+            }
           }
         }
+
       }
     }
   }

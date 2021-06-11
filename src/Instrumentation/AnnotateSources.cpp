@@ -63,12 +63,20 @@ bool addSources::runOnFunction(Function &F) {
         long long callId;
         unsigned long long callArg; // starts from 1
         bool isInput;
-        if (getCallSiteMetadataAndFirstArgumentType(*CB, callId, callArg, isInput)) {
-          if (isInput) {
-            Changed = true;
-            insertClamAddTag(callId, *(CB->getArgOperand(callArg - 1)), CB);
+
+        unsigned int argumentMetadataCount = getCallSiteArgumentMetadataCount(*CB);
+        for (int i = 0; i < argumentMetadataCount; i++) {
+          MDTuple *argumentMetadata;
+          if (getCallSiteArgumentMetadata(i, *CB, callId, callArg, argumentMetadata)) {
+            if (getArgumentMetadataType(argumentMetadata, isInput)) {
+              if (isInput) {
+                Changed = true;
+                insertClamAddTag(callId, *(CB->getArgOperand(callArg - 1)), CB);
+              }
+            }
           }
         }
+
       }
     }
   }

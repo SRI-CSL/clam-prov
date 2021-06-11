@@ -18,7 +18,7 @@ namespace clam_prov {
 class WrapSinks : public llvm::ModulePass {
   llvm::Type *m_int8PtrTy;
   llvm::FunctionCallee m_seadsaModified;
-  llvm::DenseMap<llvm::CallBase *, unsigned> m_outputParamMap;
+  llvm::DenseMap<llvm::CallBase *, llvm::SmallVector<unsigned, 4>> m_outputParamMap;
 
   bool runOnFunction(llvm::Function &F);
   llvm::FunctionCallee createWrapper(llvm::CallBase &CB);

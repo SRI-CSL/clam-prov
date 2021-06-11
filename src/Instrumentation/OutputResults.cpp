@@ -18,27 +18,37 @@ bool TagAnalysisResultsAsMetadata(Module &M, InterGlobalClam &tagAnalysis) {
           long long callId /*unused*/;
           unsigned long long callArg; // starts from 1
           bool isInput;
-          if (getCallSiteMetadataAndFirstArgumentType(*CB, callId, callArg, isInput)) {
-            if (!isInput) {
-              Value *Ptr = CB->getArgOperand(callArg - 1);
-              llvm::Optional<clam::ClamQueryAPI::TagVector> tags =
-                  tagAnalysis.tags(B, *Ptr);
-              if (tags.hasValue()) {
-                SmallVector<long long, 4> tagVector;
-                for (uint64_t t : tags.getValue()) {
-                  tagVector.push_back(t);
+          SmallVector<long long, 4> tagVector;
+
+          unsigned int argumentMetadataCount = getCallSiteArgumentMetadataCount(*CB);
+          for (int i = 0; i < argumentMetadataCount; i++) {
+            MDTuple *argumentMetadata;
+            if (getCallSiteArgumentMetadata(i, *CB, callId, callArg, argumentMetadata)) {
+              if (getArgumentMetadataType(argumentMetadata, isInput)) {
+                if (!isInput) {
+                  Value *Ptr = CB->getArgOperand(callArg - 1);
+                  llvm::Optional<clam::ClamQueryAPI::TagVector> tags = tagAnalysis.tags(B, *Ptr);
+                  if (tags.hasValue()) {
+                    for (uint64_t t : tags.getValue()) {
+                      tagVector.push_back(t);
+                    }
+                    // DEBUG
+                    // errs() << "Tags associated to " << *CB << "={";
+                    // for (auto t: tags.getValue()) {
+                    // errs() << t << ";";
+                    // }
+                    // errs() << "}\n";
+                    ////
+                  }
                 }
-                Change = setClamProvTags(ctx, *CB, tagVector);
-                // DEBUG
-                // errs() << "Tags associated to " << *CB << "={";
-                // for (auto t: tags.getValue()) {
-                // errs() << t << ";";
-                // }
-                // errs() << "}\n";
-                ////
               }
             }
           }
+
+          if (tagVector.size() > 0) {
+            Change = setClamProvTags(ctx, *CB, tagVector);
+          }
+
         }
       }
     }
