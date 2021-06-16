@@ -21,6 +21,7 @@ add_llvm_executable(clam-prov DISABLE_LLVM_LINK_LLVM_DYLIB
   Instrumentation/ProvMetadata.cpp
   Instrumentation/AddMetadata.cpp
   Instrumentation/OutputDependencyMap.cpp
+  Instrumentation/AddLogging.cpp
   )
 
 target_link_libraries (clam-prov PRIVATE
@@ -31,4 +32,15 @@ target_link_libraries (clam-prov PRIVATE
 
 llvm_config (clam-prov ${LLVM_LINK_COMPONENTS})
 install(TARGETS clam-prov RUNTIME DESTINATION bin)
+
+## Logger shared library
+add_library(clamprovlogger SHARED Logging/clam-prov-logger.c)
+set_target_properties(clamprovlogger PROPERTIES
+  VERSION 1
+  SOVERSION 1
+  PUBLIC_HEADER Logging/clam-prov-logger.h)
+target_include_directories(clamprovlogger PRIVATE Logging/clam-prov-logger.h)
+install(TARGETS clamprovlogger
+  LIBRARY DESTINATION lib
+  PUBLIC_HEADER DESTINATION include)
 

@@ -45,6 +45,7 @@
 #include "./Instrumentation/OutputResults.h"
 #include "./Instrumentation/WrapSinks.h"
 #include "./Instrumentation/OutputDependencyMap.h"
+#include "./Instrumentation/AddLogging.h"
 
 using namespace clam;
 using namespace llvm;
@@ -142,6 +143,7 @@ static void postTagAnalysis(Module &M) {
   // -- remove special calls to __CRAB_intrinsic_add_tag, and sea_dsa_set_modified
   pm.add(new clam_prov::removeSources());
   pm.add(new clam_prov::LegacyOutputDependencyMap());
+  pm.add(new clam_prov::LegacyAddLogging());
   pm.run(M);
 }
 
