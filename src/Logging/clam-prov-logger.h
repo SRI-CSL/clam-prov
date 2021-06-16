@@ -20,7 +20,7 @@
 // Constants
 #define CLAM_PROV_OUTPUT_FILE 0
 #define CLAM_PROV_OUTPUT_PIPE 1
-#define CLAM_PROV_DIR_NAME ".clam_prov"
+#define CLAM_PROV_DIR_NAME ".clam-prov"
 #define CLAM_PROV_PATH_NAME_FILE "audit.log"
 #define CLAM_PROV_PATH_NAME_PIPE "audit.pipe"
 #define CLAM_PROV_PATH_PERMISSIONS 0660
@@ -38,9 +38,53 @@ typedef struct clam_prov_record{
 } clam_prov_record;
 
 // API
+/*
+  Copy the absolute path represented by '~/.clam-prov/audit.log' into `dst`. `dst` must be big enough to fit the path.
+  Set `create` to '1' to create the directory `.clam-prov` if it doesn't exist.
+
+  Returns 'dst' on success otherwise returns NULL.
+*/
 extern char* clam_prov_logger_get_home_file(char *dst, int create);
+/*
+  Copy the absolute path represented by '~/.clam-prov/audit.pipe' into `dst`. `dst` must be big enough to fit the path.
+  Set `create` to '1' to create the directory `.clam-prov` if it doesn't exist.
+
+  Returns 'dst' on success otherwise returns NULL.
+*/
 extern char* clam_prov_logger_get_home_pipe(char *dst, int create);
+/*
+  Insert a call-site record into the buffer.
+  'control' - Unused
+  Second argument - must be a 'long'. This is the call-site identifier
+  Third argument - must be a 'long'. This is the return value of the call-site
+  Fourth argument - must be a 'char*'. This is the name of the function at the call-site
+
+  Checks if the buffer is full after each insert by calling 'clam_prov_logging_check_and_flush(0)'
+
+  Returns 0 on failure, and 1 on success
+*/
 extern int clam_prov_logging_buffer(int control, ...);
+/*
+  Initialize logging.
+  'control' - Unused
+  'Second argument' - must be an 'int'. This is the maximum size of the buffer
+  'Third argument' - must be an 'int'. This is the output mode. Values: '0' for file output, '1' for pipe output
+
+  Returns 0 on failure, and 1 on success
+*/
 extern int clam_prov_logging_init(int control, ...);
+/*
+  Shutdown logging.
+  'control' - Unused
+  No other arguments used.
+
+  Returns 0 on failure, and 1 on success
+*/
 extern int clam_prov_logging_shutdown(int control, ...);
+/*
+  Check if the buffer size is larger than the maximum allowed. Flush the buffer if the size is exceeded.
+  `force` - Force flush the buffer even if the buffer size is not exceeded
+
+  Returns 0 on failure, and 1 on success
+*/
 extern int clam_prov_logging_check_and_flush(int force);

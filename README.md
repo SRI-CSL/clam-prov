@@ -80,7 +80,7 @@ The tags propagated to sinks from sources can be outputted using the argument `d
 clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output -o test1.out.pp.bc
 ```
 
-Following is an excerpt from the file `dependency_map.output`:
+Following is an excerpt from the output file `dependency_map.output`:
 
 ```
 call-site,read,0
@@ -104,10 +104,10 @@ clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --add-logging-con
 ```
 
 The above specifies the file `call-site-logging.config` to configure how to log the call-sites when program is executed. The configurations must have the keys:
-* `output_mode` - Whether to write to a file (at `~/.clam_prov/audit.log`) or to a pipe (at `~/.clam_prov/audit.pipe`). Specify `0` to write to the file, or specify `1` to write to the pipe
+* `output_mode` - Whether to write to a file (at `~/.clam-prov/audit.log`) or to a pipe (at `~/.clam-prov/audit.pipe`). Specify `0` to write to the file, or specify `1` to write to the pipe
 * `max_records` - The maximum call-site records to buffer before writing to the file or the pipe
 
-The output is written in binary format as the `clam-prov-record` [struct](https://github.com/SRI-CSL/clam-prov/blob/master/lib/clam-prov-logger.h#L32).
+The output is written in binary format as the `clam-prov-record` [struct](https://github.com/SRI-CSL/clam-prov/blob/master/src/Logging/clam-prov-logger.h#L32).
 
 To be able to generate an executable to log call-sites from `test1.out.pp.bc` (above), the shared library must be linked as follows:
 
