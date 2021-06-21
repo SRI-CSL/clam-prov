@@ -33,6 +33,7 @@ target_link_libraries (clam-prov PRIVATE
 llvm_config (clam-prov ${LLVM_LINK_COMPONENTS})
 install(TARGETS clam-prov RUNTIME DESTINATION bin)
 
+if(UNIX AND NOT APPLE)
 ## Logger shared library
 add_library(clamprovlogger SHARED Logging/clam-prov-logger.c)
 set_target_properties(clamprovlogger PROPERTIES
@@ -43,4 +44,4 @@ target_include_directories(clamprovlogger PRIVATE Logging/clam-prov-logger.h)
 install(TARGETS clamprovlogger
   LIBRARY DESTINATION lib
   PUBLIC_HEADER DESTINATION include)
-
+endif()

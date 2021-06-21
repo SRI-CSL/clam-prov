@@ -95,9 +95,9 @@ The output above says the following:
 * Third call-site `write` has the tag `2`
 * The third call-site (`write`) has the propagated tags `0`, and `1`
 
-## Log call-sites ##
+## Log call-sites (ONLY LINUX) ##
 
-Logging can be added to a program to emit call-sites using the argument `add-logging-config` as follows:
+Logging can be added to a Linux program to emit call-sites using the argument `add-logging-config` as follows:
 
 ```
 clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --add-logging-config=call-site-logging.config -o test1.out.pp.bc
