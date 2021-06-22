@@ -95,7 +95,7 @@ The output above says the following:
 * Third call-site `write` has the tag `2`
 * The third call-site (`write`) has the propagated tags `0`, and `1`
 
-## Log call-sites (ONLY LINUX) ##
+## Log call-sites (Linux) ##
 
 Logging can be added to a Linux program to emit call-sites using the argument `add-logging-config` as follows:
 
