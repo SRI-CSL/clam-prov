@@ -1,0 +1,4 @@
+call-site,read_one,0
+call-site,read_one,1
+call-site,write_two,2
+tags,write_two,0,1

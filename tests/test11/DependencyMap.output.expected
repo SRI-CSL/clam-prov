@@ -1,0 +1,10 @@
+call-site,read,0
+call-site,read,1
+call-site,read,2
+call-site,read,3
+call-site,read,4
+call-site,read,5
+call-site,read,6
+call-site,read,7
+call-site,write,8
+tags,write,0,2,4,6

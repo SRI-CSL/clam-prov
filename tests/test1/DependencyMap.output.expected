@@ -1,0 +1,7 @@
+call-site,read,0
+call-site,read,1
+call-site,read,2
+call-site,write,4
+tags,write,2
+call-site,write,3
+tags,write,0
