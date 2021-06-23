@@ -226,6 +226,8 @@ int main(int argc, char *argv[]) {
   AnalysisParams aparams;
   aparams.dom = CrabDomain::TAG_INTERVALS;
   aparams.run_inter = true;
+  // TODO: make this command-line option
+  aparams.analyze_recursive_functions = true;
   aparams.store_invariants = true;
   aparams.print_invars = true;
   // disable Clam/Crab warnings
