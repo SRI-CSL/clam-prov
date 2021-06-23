@@ -47,10 +47,14 @@ FunctionCallee WrapSinks::createWrapper(CallBase &CB) {
   Builder.SetInsertPoint(OrigCall); // before OrigCall
 
   for (unsigned argIndex : m_outputParamMap[&CB]) {
-    Value *castedPtr = Builder.CreateBitOrPointerCast(
-        wrapperF->getArg(argIndex), m_int8PtrTy);
+    Value *Arg = wrapperF->getArg(argIndex);
+    Value *castedArg = Builder.CreateBitOrPointerCast(Arg, m_int8PtrTy,
+						      (Arg->hasName() ?
+						       Arg->getName():
+						       "arg_" + std::to_string(argIndex)) + ".cast");
+	     
     Builder.CreateCall(m_seadsaModified.getFunctionType(),
-                       m_seadsaModified.getCallee(), {castedPtr});
+                       m_seadsaModified.getCallee(), {castedArg});
   }
 
   Builder.SetInsertPoint(ExitBB); // at the end of the block

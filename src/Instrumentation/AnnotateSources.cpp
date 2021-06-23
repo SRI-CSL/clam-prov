@@ -17,7 +17,7 @@ void addSources::insertClamAddTag(long long tag, Value &ptr,
   IRBuilder<> Builder(ctx);
 
   Builder.SetInsertPoint(insertPt);
-  Value *castedPtr = Builder.CreateBitOrPointerCast(&ptr, int8PtrTy);
+  Value *castedPtr = Builder.CreateBitOrPointerCast(&ptr, int8PtrTy, ptr.getName() + ".cast");
   if (castedPtr != &ptr) {
     Builder.SetInsertPoint(insertPt);
   }
