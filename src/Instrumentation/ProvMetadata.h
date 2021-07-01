@@ -61,9 +61,14 @@ bool getCallSiteArgumentMetadata (const unsigned int argumentMetadataIndex, cons
   Checks in the argument MDTuple ('argumentMetadata') if any of the labels is 'input', or 'output'.
   If only 'input' label exists then 'isInput' set to 'true', and returns 'true'.
   If only 'output' label exists then 'isInput' set to 'false', and returns 'true'.
+  Also, sets the value of the size operand according to what is found in the LLVM metadata.
+  The size operand value refers to the argument index which contains the size of this argument.
+  Example: If sizeOperandValue=3, then the size of this argument is specified by the third argument.
+
   Otherwise, doesn't set 'isInput', and returns 'false'.
 */
 bool getArgumentMetadataType (llvm::MDTuple *argumentMetadata, bool &isInput);
+bool getArgumentMetadataType (llvm::MDTuple *argumentMetadata, bool &isInput, int &sizeOperandValue);
 
 /*
   Convenience function.

@@ -8,6 +8,9 @@ namespace clam_prov {
 
 static StringRef metadataKeyCallSite("call-site-metadata");
 static StringRef keyMetadataClamProv("clam-prov-tags");
+static StringRef keyClamProvType("clam-prov-type");
+static StringRef keyClamProvSize("clam-prov-size");
+static StringRef keyValueSeparator(":");
 
 static ConstantAsMetadata* getIntegerAsMetadata(llvm::LLVMContext &ctx, long long value){
   IntegerType *int64Ty = Type::getInt64Ty(ctx);
@@ -71,17 +74,29 @@ bool getCallSiteArgumentMetadata (const unsigned int argumentMetadataIndex, cons
 }
 
 // input or output
-bool getArgumentMetadataType (llvm::MDTuple *argumentMetadata, bool &isInput) {
+bool getArgumentMetadataType (llvm::MDTuple *argumentMetadata, bool &isInput, int &sizeOperandValue) {
   if (argumentMetadata != nullptr){
     int indexInput = -1, indexOutput = -1;
     unsigned int argTupleSize = argumentMetadata->getNumOperands();
     for (unsigned int i = 1; i < argTupleSize; i++) { // start from 1 because 0 is argument index
       if (MDString *labelString = dyn_cast<MDString>(argumentMetadata->getOperand(i))) {
-        if (labelString->getString() == "input") {
-          indexInput = i;
-        }
-        if (labelString->getString() == "output") {
-          indexOutput = i;
+        SmallVector<StringRef, 2> tokens;
+        labelString->getString().split(tokens, keyValueSeparator, 2, true);
+        if (tokens.size() == 2) {
+          StringRef tokenKey = tokens[0].trim();
+          StringRef tokenValue = tokens[1].trim();
+          if (tokenKey == keyClamProvType) {
+            if (tokenValue == "input") {
+              indexInput = i;
+            } else if (tokenValue == "output") {
+              indexOutput = i;
+            }
+          } else if (tokenKey == keyClamProvSize) {
+            APInt sizeAPInt;
+            if (!tokenValue.getAsInteger(10, sizeAPInt)) {
+              sizeOperandValue = sizeAPInt.getSExtValue();
+            }
+          }
         }
       }
     }
@@ -95,6 +110,12 @@ bool getArgumentMetadataType (llvm::MDTuple *argumentMetadata, bool &isInput) {
     }
   }
   return false;
+}
+
+bool getArgumentMetadataType (llvm::MDTuple *argumentMetadata, bool &isInput) {
+  int sizeOperandValue;
+  bool result = getArgumentMetadataType(argumentMetadata, isInput, sizeOperandValue);
+  return result;
 }
 
 bool getCallSiteMetadataAndFirstArgumentType (const llvm::CallBase &CB,

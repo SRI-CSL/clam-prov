@@ -11,15 +11,20 @@ User defines sources and sinks (memory locations) via a
 configuration file (option `-add-metadata-config`):
 
 ```
-read, 2, input
-write, 2, output
+read, 2, clam-prov-type:input
+read, 2, clam-prov-size:3
+write, 2, clam-prov-type:output
+write, 2, clam-prov-size:3
 ```
 
-This states that the second parameter of any call to `read` is an
-input (i.e., _source_) and the second parameter of any call to `write`
-is an output (i.e., _sink_).  Note that, in general, a program will
-have _many sources_ and _many sinks_ since it can have many calls to
-`read` and `write`.
+This states that the `clam-prov` type of the second parameter of any 
+call to `read` is an input (i.e., _source_) and the `clam-prov` type of
+the second parameter of any call to `write` is an output (i.e., _sink_).
+Also, it states that the size of the second parameter of any call to `read`
+is specified by the third parameter and the size of the second parameter
+of any call to `write` is specified by the third parameter. Note that, in 
+general, a program will have _many sources_ and _many sinks_ since it can 
+have many calls to `read` and `write`.
 
 The analysis then assigns a unique numerical identifier (i.e., tags)
 to each source and it relies on
@@ -34,7 +39,7 @@ sources. Currently, this output is encoded as metadata named
 %res = call i64 @write(i32 %param, i8* %param1, i64 %param2), !call-site-metadata !7, !clam-prov-tags !9
 ...
 !7 = !{!"4", !8}
-!8 = !{!"2", !"output"}
+!8 = !{!"2", !"clam-prov-type:output", !"clam-prov-size:3"}
 !9 = !{i64 2}
 
 ```
