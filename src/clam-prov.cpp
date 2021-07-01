@@ -40,12 +40,13 @@
 #include "crab/domains/flat_boolean_domain.hpp"
 #include "crab/domains/region_domain.hpp"
 
+#include "./Instrumentation/AddLogging.h"
 #include "./Instrumentation/AddMetadata.h"
 #include "./Instrumentation/AnnotateSources.h"
 #include "./Instrumentation/OutputResults.h"
-#include "./Instrumentation/WrapSinks.h"
 #include "./Instrumentation/OutputDependencyMap.h"
-#include "./Instrumentation/AddLogging.h"
+#include "./Instrumentation/WrapFunctions.h"
+#include "./Instrumentation/WrapSinks.h"
 
 using namespace clam;
 using namespace llvm;
@@ -95,7 +96,6 @@ REGISTER_DOMAIN(CrabDomain::TAG_INTERVALS, tag_analysis_with_interval_domain_t)
 
 static void preTagAnalysis(Module &M) {
   llvm::legacy::PassManager pm;
-
   /// === Generic passes ==== ///
 
   // kill unused internal global
@@ -214,6 +214,11 @@ int main(int argc, char *argv[]) {
   Triple triple(tripleT);
   TargetLibraryInfoWrapperPass TLIW(triple);
 
+  /// 0. Replace calls with special wrappers
+  llvm::legacy::PassManager pm;
+  pm.add(new clam_prov::WrapFunctions());
+  pm.run(*module);
+  
   /// 1. Optimize and add special instrumentation for the Tag analysis.
   preTagAnalysis(*module);
 

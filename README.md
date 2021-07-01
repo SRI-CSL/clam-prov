@@ -66,9 +66,10 @@ cmake --build . --target install
 ## Usage ##
 
 ```
-clang -Xclang -disable-O0-optnone -c -emit-llvm test1.c -o test1.bc
-clam-pp --crab-devirt test1.bc -o test1.pp.bc
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config -o test1.out.pp.bc
+clang -Xclang -disable-O0-optnone -c -emit-llvm test.c -o test.bc
+clam-pp --crab-devirt test.bc -o test.pp.bc
+llvm-link test.pp.bc rt/wrappers.bc  -o test.rt.pp.bc
+clam-prov test.rt.pp.bc --add-metadata-config=addMetadata.config -o test.out.rt.pp.bc
 
 ```
 
@@ -77,7 +78,7 @@ clam-prov test1.pp.bc --add-metadata-config=addMetadata.config -o test1.out.pp.b
 The tags propagated to sinks from sources can be outputted using the argument `dependency-map-file` as follows:
 
 ```
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output -o test1.out.pp.bc
+clam-prov test.pp.bc --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output -o test.out.pp.bc
 ```
 
 Following is an excerpt from the output file `dependency_map.output`:
@@ -100,7 +101,7 @@ The output above says the following:
 Logging can be added to a Linux program to emit call-sites using the argument `add-logging-config` as follows:
 
 ```
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --add-logging-config=call-site-logging.config -o test1.out.pp.bc
+clam-prov test.pp.bc --add-metadata-config=addMetadata.config --add-logging-config=call-site-logging.config -o test.out.pp.bc
 ```
 
 The above specifies the file `call-site-logging.config` to configure how to log the call-sites when program is executed. The configurations must have the keys:
@@ -109,15 +110,15 @@ The above specifies the file `call-site-logging.config` to configure how to log 
 
 The output is written in binary format as the `clam-prov-record` [struct](https://github.com/SRI-CSL/clam-prov/blob/master/src/Logging/clam-prov-logger.h#L32).
 
-To be able to generate an executable to log call-sites from `test1.out.pp.bc` (above), the shared library must be linked as follows:
+To be able to generate an executable to log call-sites from `test.out.pp.bc` (above), the shared library must be linked as follows:
 
 ```
-llc -relocation-model=pic -o test1.out.pp.s test1.out.pp.bc
-gcc -L./install/lib test1.out.pp.s -o test1.out.pp.native -lclamprovlogger
+llc -relocation-model=pic -o test.out.pp.s test.out.pp.bc
+gcc -L./install/lib test.out.pp.s -o test.out.pp.native -lclamprovlogger
 ```
 
 Finally, the generated executable can be executed as:
 
 ```
-LD_LIBRARY_PATH=./install/lib ./test1.out.pp.native
+LD_LIBRARY_PATH=./install/lib ./test.out.pp.native
 ```

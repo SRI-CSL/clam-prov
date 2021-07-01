@@ -22,6 +22,7 @@ add_llvm_executable(clam-prov DISABLE_LLVM_LINK_LLVM_DYLIB
   Instrumentation/AddMetadata.cpp
   Instrumentation/OutputDependencyMap.cpp
   Instrumentation/AddLogging.cpp
+  Instrumentation/WrapFunctions.cpp
   )
 
 target_link_libraries (clam-prov PRIVATE
