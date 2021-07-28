@@ -63,6 +63,10 @@ static llvm::cl::opt<std::string>
                    llvm::cl::init(""), llvm::cl::value_desc("filename"),
                    llvm::cl::cat(ClamProvOpts));
 
+static llvm::cl::opt<std::string>
+    AsmOutputFilename("oll", llvm::cl::desc("Output analyzed bitcode"),
+                      llvm::cl::init(""), llvm::cl::value_desc("filename"));
+
 // -- Set up an abstract domain specialized to perform tag analysis
 namespace clam {
 namespace CrabDomain {
@@ -171,7 +175,7 @@ int main(int argc, char *argv[]) {
   llvm::sys::PrintStackTraceOnErrorSignal(argv[0]);
   llvm::PrettyStackTraceProgram PSTP(argc, argv);
   llvm::EnableDebugBuffering = true;
-  std::unique_ptr<llvm::ToolOutputFile> output;
+  std::unique_ptr<llvm::ToolOutputFile> output, asmOutput;
 
   // Get module from LLVM file
   LLVMContext Context;
@@ -195,7 +199,6 @@ int main(int argc, char *argv[]) {
     output = std::make_unique<llvm::ToolOutputFile>(
         OutputFilename.c_str(), error_code, llvm::sys::fs::F_None);
   }
-
   if (error_code) {
     if (llvm::errs().has_colors()) {
       llvm::errs().changeColor(llvm::raw_ostream::RED);
@@ -208,6 +211,25 @@ int main(int argc, char *argv[]) {
     }
     return 1;
   }
+
+
+  if (!AsmOutputFilename.empty()) {
+    asmOutput = std::make_unique<llvm::ToolOutputFile>(
+        AsmOutputFilename.c_str(), error_code, llvm::sys::fs::F_Text);
+  }
+  if (error_code) {
+    if (llvm::errs().has_colors()) {
+      llvm::errs().changeColor(llvm::raw_ostream::RED);
+    }
+    llvm::errs() << "error: "
+		 << "Could not open " << AsmOutputFilename << ": "
+                 << error_code.message() << "\n";
+    if (llvm::errs().has_colors()) {
+      llvm::errs().resetColor();
+    }
+    return 1;
+  }
+  
 
   const auto &tripleS = module->getTargetTriple();
   Twine tripleT(tripleS);
