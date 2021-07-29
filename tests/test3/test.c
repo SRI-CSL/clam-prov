@@ -1,3 +1,8 @@
+// RUN: %clam-prov %s --add-metadata-config=%tests/test3/AddMetadata.config --dependency-map-file=%T/DependencyMap.output
+// RUN: %cmp %T/DependencyMap.output %tests/test3/DependencyMap.output.expected && echo "OK" > %T/result.txt || echo "FAIL" > %T/result.txt
+// RUN: cat %T/result.txt | FileCheck %s
+// CHECK: OK
+
 void read(char *m){
   *m = 'i';
 }

@@ -51,6 +51,11 @@ This says that the second parameter of call to `write` (identifier
 - Install [gmp](https://gmplib.org/)
 - Install [boost](https://www.boost.org/) >= 1.65
 
+### To run tests ###
+
+- `lit`: `sudo pip install lit`
+- `cmp` utility
+
 ## Compilation and Installation ##
 
 ```
@@ -62,6 +67,12 @@ cmake --build . --target clam-src && cmake ..
 cmake --build . --target crab && cmake ..
 cmake --build . --target install
 ```
+
+## Checking installation ## 
+
+To run some regression tests:
+
+     cmake --build . --target test-all
 
 ## Usage ##
 

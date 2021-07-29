@@ -1,3 +1,9 @@
+// RUN: %clam-prov %s --add-metadata-config=%tests/test21/AddMetadata.config --dependency-map-file=%T/DependencyMap.output
+// RUN: %cmp %T/DependencyMap.output %tests/test21/DependencyMap.output.expected && echo "OK" > %T/result.txt || echo "FAIL" > %T/result.txt
+// RUN: cat %T/result.txt | FileCheck %s
+// CHECK: OK
+// XFAIL: *
+
 /*
 Output dependent on one input and then update the output with a non-tagged input
 

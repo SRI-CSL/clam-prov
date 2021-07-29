@@ -1,3 +1,8 @@
+// RUN: %clam-prov %s --add-metadata-config=%tests/test14/AddMetadata.config --dependency-map-file=%T/DependencyMap.output
+// RUN: %cmp %T/DependencyMap.output %tests/test14/DependencyMap.output.expected && echo "OK" > %T/result.txt || echo "FAIL" > %T/result.txt
+// RUN: cat %T/result.txt | FileCheck %s
+// CHECK: OK
+
 /*
 One output has no input and one output has one input
 */

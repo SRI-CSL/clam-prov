@@ -1,3 +1,9 @@
+// RUN: %clam-prov %s --add-metadata-config=%tests/test15/AddMetadata.config --dependency-map-file=%T/DependencyMap.output
+// RUN: %cmp %T/DependencyMap.output %tests/test15/DependencyMap.output.expected && echo "OK" > %T/result.txt || echo "FAIL" > %T/result.txt
+// RUN: cat %T/result.txt | FileCheck %s
+// CHECK: OK
+
+
 /*
 Two inputs and output assigned by pointer manipulation
 */
