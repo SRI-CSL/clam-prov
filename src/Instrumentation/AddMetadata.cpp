@@ -21,9 +21,10 @@ using namespace llvm;
 extern cl::OptionCategory ClamProvOpts;
 
 static cl::opt<std::string>
-    configFilePathOption("add-metadata-config", cl::Required,
-                         cl::desc("Input file for the pass"), cl::ValueRequired,
-                         cl::cat(ClamProvOpts));
+configFilePathOption("add-metadata-config", /*cl::Required,*/
+		     cl::desc("Input file for the pass"), /*cl::ValueRequired,*/
+		     cl::init(""), 
+		     cl::cat(ClamProvOpts));
 
 static cl::opt<std::string>
     configOutputOption("add-metadata-output", cl::init(""), cl::Optional,
@@ -303,7 +304,7 @@ bool AddMetadata::runOnModule(Module &module) {
   std::string inputFilePath =
       configFilePathOption == "" ? "" : configFilePathOption.getValue().c_str();
   if (inputFilePath.empty()) {
-    errs() << "Must specify argument '-add-metadata-config\n";
+    errs() << "ERROR: Must specify argument '-add-metadata-config\n";
     return false;
   }
 
