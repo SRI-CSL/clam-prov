@@ -81,20 +81,20 @@ To run some regression tests:
 
 ## Usage ##
 
-```
-clang -Xclang -disable-O0-optnone -c -emit-llvm test1.c -o test1.bc
-clam-pp --crab-devirt test1.bc -o test1.pp.bc
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config -o test1.out.pp.bc
+     clam-prov.py  test.c --add-metadata-config=addMetadata.config -o test.prov.bc
 
-```
+The output bitcode file `test.prov.bc` contains `call-site-metadata`
+metadata indicating the tags assigned to both sources (e.g., read
+calls) and sinks (e.g., write calls).
 
 ## Output Propagated Tags ##
 
-The tags propagated to sinks from sources can be outputted using the argument `dependency-map-file` as follows:
+Alternatively, the same information provided by LLVM metadata
+`call-site-metadata` can be printed into a text file. The tags
+propagated to sinks from sources can be outputted using the argument
+`dependency-map-file` as follows:
 
-```
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output -o test1.out.pp.bc
-```
+     clam-prov.py test.c --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output
 
 Following is an excerpt from the output file `dependency_map.output`:
 
@@ -115,9 +115,9 @@ The output above says the following:
 
 Logging can be added to a Linux program to emit call-sites using the argument `add-logging-config` as follows:
 
-```
-clam-prov test1.pp.bc --add-metadata-config=addMetadata.config --add-logging-config=call-site-logging.config -o test1.out.pp.bc
-```
+     clang -Xclang -disable-O0-optnone -c -emit-llvm test.c -o test.bc
+     clam-pp --crab-devirt test.bc -o test.pp.bc
+     clam-prov test.pp.bc --add-metadata-config=addMetadata.config --add-logging-config=call-site-logging.config -o test.out.pp.bc
 
 The above specifies the file `call-site-logging.config` to configure how to log the call-sites when program is executed. The configurations must have the keys:
 * `output_mode` - Whether to write to a file (at `~/.clam-prov/audit.log`) or to a pipe (at `~/.clam-prov/audit.pipe`). Specify `0` to write to the file, or specify `1` to write to the pipe
@@ -125,15 +125,15 @@ The above specifies the file `call-site-logging.config` to configure how to log 
 
 The output is written in binary format as the `clam-prov-record` [struct](https://github.com/SRI-CSL/clam-prov/blob/master/src/Logging/clam-prov-logger.h#L32).
 
-To be able to generate an executable to log call-sites from `test1.out.pp.bc` (above), the shared library must be linked as follows:
+To be able to generate an executable to log call-sites from `test.out.pp.bc` (above), the shared library must be linked as follows:
 
 ```
-llc -relocation-model=pic -o test1.out.pp.s test1.out.pp.bc
-gcc -L./install/lib test1.out.pp.s -o test1.out.pp.native -lclamprovlogger
+llc -relocation-model=pic test.out.pp.bc -o test.out.pp.s 
+gcc -L./install/lib test.out.pp.s -o test.out.pp.native -lclamprovlogger
 ```
 
 Finally, the generated executable can be executed as:
 
 ```
-LD_LIBRARY_PATH=./install/lib ./test1.out.pp.native
+LD_LIBRARY_PATH=./install/lib ./test.out.pp.native
 ```
