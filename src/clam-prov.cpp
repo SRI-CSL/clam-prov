@@ -46,6 +46,7 @@
 #include "./Instrumentation/WrapSinks.h"
 #include "./Instrumentation/OutputDependencyMap.h"
 #include "./Instrumentation/AddLogging.h"
+#include "./Util/SourcesAndSinks.h"
 
 using namespace clam;
 using namespace llvm;
@@ -66,6 +67,12 @@ static llvm::cl::opt<std::string>
 static llvm::cl::opt<std::string>
     AsmOutputFilename("oll", llvm::cl::desc("Output analyzed bitcode"),
                       llvm::cl::init(""), llvm::cl::value_desc("filename"));
+
+
+static llvm::cl::opt<bool>
+    PrintSourcesSinks("print-sources-sinks",
+		      llvm::cl::desc("Print sources (input) and sinks (output)"),
+		      llvm::cl::init(false));
 
 // -- Set up an abstract domain specialized to perform tag analysis
 namespace clam {
@@ -236,48 +243,53 @@ int main(int argc, char *argv[]) {
   Triple triple(tripleT);
   TargetLibraryInfoWrapperPass TLIW(triple);
 
-  /// 1. Optimize and add special instrumentation for the Tag analysis.
-  preTagAnalysis(*module);
-
-  /// 2. Translation from LLVM to CrabIR
-  std::unique_ptr<HeapAbstraction> mem = runSeaDsa(*module, TLIW);
-  CrabBuilderParams cparams;
-  cparams.setPrecision(clam::CrabBuilderPrecision::MEM);
-  CrabBuilderManager man(cparams, TLIW, std::move(mem));
-  /// Set Crab parameters
-  AnalysisParams aparams;
-  aparams.dom = CrabDomain::TAG_INTERVALS;
-  aparams.run_inter = true;
-  // TODO: make this command-line option
-  aparams.analyze_recursive_functions = true;
-  aparams.store_invariants = true;
-  aparams.print_invars = true;
-  // disable Clam/Crab warnings
-  crab::CrabEnableWarningMsg(false);
-  // for debugging only
-  // crab::CrabEnableVerbosity(1);
-  // to print tags
-  crab::CrabEnableLog("region-print");
-  /// Create an inter-analysis instance
-  std::unique_ptr<InterGlobalClam> clam(new InterGlobalClam(*module, man));
-
-  /// 3. Run the Crab analysis
-  ClamGlobalAnalysis::abs_dom_map_t assumptions;
-  clam->analyze(aparams, assumptions);
-
-  /// 4. Dump the analysis results as metadata in the bitcode
-  clam_prov::TagAnalysisResultsAsMetadata(*module, *clam);
-
-  /// 5. Remove instrumentation added at step 1.
-  /// TODO:
-  postTagAnalysis(*module);
-
-  if (!OutputFilename.empty()) {
-    llvm::legacy::PassManager pm;
-    pm.add(createBitcodeWriterPass(output->os()));
-    pm.run(*module);
-    output->keep();
+  if (PrintSourcesSinks) {
+    clam_prov::PrintSourcesAndSinks PSS;
+    PSS.runOnModule(*module);
+  } else {
+    /// 1. Optimize and add special instrumentation for the Tag analysis.
+    preTagAnalysis(*module);
+    
+    /// 2. Translation from LLVM to CrabIR
+    std::unique_ptr<HeapAbstraction> mem = runSeaDsa(*module, TLIW);
+    CrabBuilderParams cparams;
+    cparams.setPrecision(clam::CrabBuilderPrecision::MEM);
+    CrabBuilderManager man(cparams, TLIW, std::move(mem));
+    /// Set Crab parameters
+    AnalysisParams aparams;
+    aparams.dom = CrabDomain::TAG_INTERVALS;
+    aparams.run_inter = true;
+    // TODO: make this command-line option
+    aparams.analyze_recursive_functions = true;
+    aparams.store_invariants = true;
+    aparams.print_invars = true;
+    // disable Clam/Crab warnings
+    crab::CrabEnableWarningMsg(false);
+    // for debugging only
+    // crab::CrabEnableVerbosity(1);
+    // to print tags
+    crab::CrabEnableLog("region-print");
+    /// Create an inter-analysis instance
+    std::unique_ptr<InterGlobalClam> clam(new InterGlobalClam(*module, man));
+    
+    /// 3. Run the Crab analysis
+    ClamGlobalAnalysis::abs_dom_map_t assumptions;
+    clam->analyze(aparams, assumptions);
+    
+    /// 4. Dump the analysis results as metadata in the bitcode
+    clam_prov::TagAnalysisResultsAsMetadata(*module, *clam);
+    
+    /// 5. Remove instrumentation added at step 1.
+    /// TODO:
+    postTagAnalysis(*module);
+    
+    if (!OutputFilename.empty()) {
+      llvm::legacy::PassManager pm;
+      pm.add(createBitcodeWriterPass(output->os()));
+      pm.run(*module);
+      output->keep();
+    }
   }
-
+  
   return 0;
 }

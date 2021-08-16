@@ -275,7 +275,9 @@ def parseArgs(argv):
     p.add_argument('--dependency-map-file',
                    help='Results of the Tag analysis',
                    dest='dependency_map', type=str, metavar='FILE')
-    
+    add_bool_argument(p, 'print-sources-sinks',
+                      help='Print info about sources/sinks and exit',
+                      dest='print_sources_sinks', default=False)        
     p.add_argument('file', metavar='FILE', help='Input file')
 
     args = p.parse_args(argv)
@@ -618,12 +620,19 @@ def clamProv(in_name, out_name, args, extra_opts, cpu = -1, mem = -1):
     if args.debug_pass:
         clam_args.append('--debug-pass=Structure')
 
-    if args.input_config is not None:
-        clam_args.append('--add-metadata-config={0}'.format(args.input_config))
-
-    if args.dependency_map is not None:
-        clam_args.append('--dependency-map-file={0}'.format(args.dependency_map))
+    if args.print_sources_sinks:
+        clam_args.append('--print-sources-sinks')
+    else:
         
+        if args.input_config is not None:
+            clam_args.append('--add-metadata-config={0}'.format(args.input_config))
+
+        if args.dependency_map is not None:
+            clam_args.append('--dependency-map-file={0}'.format(args.dependency_map))
+
+    if verbose:
+        print('clam-prov command: ' + ' '.join(clam_args))
+            
     returnvalue, timeout, out_of_mem, segfault, unknown = \
         run_command_with_limits(clam_args, cpu, mem)
     if timeout:
