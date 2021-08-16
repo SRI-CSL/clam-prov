@@ -32,6 +32,7 @@ target_link_libraries (clam-prov PRIVATE
 
 llvm_config (clam-prov ${LLVM_LINK_COMPONENTS})
 install(TARGETS clam-prov RUNTIME DESTINATION bin)
+install(FILES sources-sinks.config DESTINATION config)
 
 # if(UNIX AND NOT APPLE)
 # ## Logger shared library
