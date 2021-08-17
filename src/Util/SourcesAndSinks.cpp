@@ -49,7 +49,7 @@ class GetSourcesAndSinksImpl {
 
   ~GetSourcesAndSinksImpl() = default;
   
-  void runOnModule(llvm::Module &M) {
+  void runOnModule(llvm::Module &M) {    
     for (Function &F: M) {
       for (BasicBlock &BB: F) {
 	for (Instruction &I: BB) {
@@ -125,13 +125,28 @@ void PrintSourcesAndSinks::runOnModule(Module &M) {
   auto sinksMap = GSS.getSinks();
 
   errs() << "===-------- Sources/Sinks Analysis --------=== \n";
-  errs() << "Sources\n";
-  for (auto &kv: sourcesMap) {
-    errs() << "  " << kv.first->getName() << " " << kv.second.size() << " calls.\n";
+  if (M.empty()) {
+    errs() << M.getModuleIdentifier() << " is empty. "
+	   << "Check that the module has a main function\n";
   }
-  errs() << "Sinks\n";
-  for (auto &kv: sinksMap) {
-    errs() << "  " << kv.first->getName() << " " << kv.second.size() << " calls.\n";
+  errs() << "Sources: ";
+  if (sourcesMap.empty()) {
+    errs() << "none\n";
+  } else {
+    errs() << "\n";
+    for (auto &kv: sourcesMap) {
+      errs() << "  " << kv.first->getName() << " " << kv.second.size() << " calls.\n";
+    }
+  }
+  
+  errs() << "Sinks: ";
+  if (sinksMap.empty()) {
+    errs() << "none\n";
+  } else {
+    errs() << "\n";
+    for (auto &kv: sinksMap) {
+      errs() << "  " << kv.first->getName() << " " << kv.second.size() << " calls.\n";
+    }
   }
   errs() << "===----------------------------------------=== \n";  
 }  
