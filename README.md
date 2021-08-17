@@ -109,7 +109,7 @@ The output above says the following:
 * First call-site `read` has the tag `0`
 * Second call-site `read` has the tag `1`
 * Third call-site `write` has the tag `2`
-* The third call-site (`write`) has the propagated tags `0`, and `1`
+* The third call-site (`write`) has the propagated tags `0`, and `1`. A line that starts with `tags` always refer to the call-site from the previous line.
 
 ## Log call-sites (Linux) ##
 
