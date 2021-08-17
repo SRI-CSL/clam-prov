@@ -23,6 +23,7 @@ add_llvm_executable(clam-prov DISABLE_LLVM_LINK_LLVM_DYLIB
   Instrumentation/OutputDependencyMap.cpp
   Instrumentation/AddLogging.cpp
   Util/SourcesAndSinks.cpp
+  Util/DummyMainFunction.cpp
   )
 
 target_link_libraries (clam-prov PRIVATE

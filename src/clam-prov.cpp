@@ -48,6 +48,7 @@
 #include "./Instrumentation/OutputDependencyMap.h"
 #include "./Instrumentation/AddLogging.h"
 #include "./Util/SourcesAndSinks.h"
+#include "./Util/DummyMainFunction.h"
 
 using namespace clam;
 using namespace llvm;
@@ -70,6 +71,12 @@ static llvm::cl::opt<std::string>
                       llvm::cl::init(""), llvm::cl::value_desc("filename"),
 		      llvm::cl::cat(ClamProvOpts));
 
+
+static llvm::cl::opt<bool>
+AddMain("add-main",
+	llvm::cl::desc("Add a main function if module does not have one"),
+	llvm::cl::init(false),
+	llvm::cl::cat(ClamProvOpts));
 
 static llvm::cl::opt<bool>
     PrintSourcesSinks("print-sources-sinks",
@@ -150,10 +157,9 @@ REGISTER_DOMAIN(CrabDomain::TAG_INTERVALS, tag_analysis_with_interval_domain_t)
 } // namespace clam
 
 static void preTagAnalysis(Module &M) {
-  llvm::legacy::PassManager pm;
-
   /// === Generic passes ==== ///
-
+  llvm::legacy::PassManager pm;
+  
   // kill unused internal global
   pm.add(llvm::createGlobalDCEPass());
   pm.add(clam::createRemoveUnreachableBlocksPass());
@@ -186,6 +192,7 @@ static void preTagAnalysis(Module &M) {
   pm.add(llvm::createUnifyFunctionExitNodesPass());
   pm.add(new clam::NameValues());
 
+  
   /// === Specific passes for the Tag analysis ==== ///
   pm.add(new clam_prov::LegacyAddMetadata());
   pm.add(new clam_prov::addSources());
@@ -288,7 +295,11 @@ int main(int argc, char *argv[]) {
   Triple triple(tripleT);
   TargetLibraryInfoWrapperPass TLIW(triple);
 
-  if (PrintSourcesSinks) {
+  if (AddMain) {
+    // Needed for libraries without a main
+    clam_prov::DummyMainFunction DMF;
+    DMF.runOnModule(*module);
+  } else if (PrintSourcesSinks) {
     clam_prov::PrintSourcesAndSinks PSS;
     PSS.runOnModule(*module);
   } else {
@@ -326,14 +337,14 @@ int main(int argc, char *argv[]) {
     
     /// 5. Remove instrumentation added at step 1.
     /// TODO:
-    postTagAnalysis(*module);
-    
-    if (!OutputFilename.empty()) {
-      llvm::legacy::PassManager pm;
-      pm.add(createBitcodeWriterPass(output->os()));
-      pm.run(*module);
-      output->keep();
-    }
+    postTagAnalysis(*module);    
+  }
+
+  if (!OutputFilename.empty()) {
+    llvm::legacy::PassManager pm;
+    pm.add(createBitcodeWriterPass(output->os()));
+    pm.run(*module);
+    output->keep();
   }
   
   return 0;

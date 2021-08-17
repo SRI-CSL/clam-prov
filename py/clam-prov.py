@@ -269,6 +269,9 @@ def parseArgs(argv):
                     dest='debug_pass', default=False,
                     action='store_true')
     ## clam-prov
+    add_bool_argument(p, 'add-main',
+                      help='Add main if module does not have one (e.g. libraries)',
+                      dest='add_main', default=False)
     p.add_argument('--add-metadata-config',
                    help='File to mark sources and sinks for the Tag analysis',
                    dest='input_config', type=str, metavar='FILE')
@@ -404,6 +407,12 @@ def defOutPPName(name, wd=None):
     fname = os.path.splitext(base)[0] + '.ll'
     return os.path.join(wd, fname)
 
+def defMainPPName(name, wd=None):
+    base = os.path.basename(name)
+    if wd is None:
+        wd = os.path.dirname (name)
+    fname = os.path.splitext(base)[0] + '.main.bc'
+    return os.path.join(wd, fname)
 
 def _plus_plus_file(name):
     ext = os.path.splitext(name)[1]
@@ -470,7 +479,7 @@ def clang(in_name, out_name, args, arch=32, extra_args=[]):
             break
 
     if verbose:
-        print('Clang command: ' + ' '.join(clang_args))
+        print('clang command: ' + ' '.join(clang_args))
     returnvalue, timeout, out_of_mem, segfault, unknown = \
         run_command_with_limits(clang_args, -1, -1)
     if timeout:
@@ -614,6 +623,17 @@ def clamPP(in_name, out_name, args, extra_args=[], cpu = -1, mem = -1):
     elif segfault or unknown or returnvalue != 0:
         sys.exit(PP_ERROR)
 
+def addMain(in_name, out_name):
+    clam_args = [ getClamProv(), in_name, '-o', out_name]
+    clam_args = clam_args + ['--add-main']
+    if verbose:
+        print('clam-prov command: ' + ' '.join(clam_args))
+    cpu, mem = -1,-1
+    returnvalue, timeout, out_of_mem, segfault, unknown = \
+        run_command_with_limits(clam_args, cpu, mem)
+    if timeout or out_of_mem or segfault or unknown or returnvalue != 0:
+        sys.exit(PP_ERROR)
+    
 def clamProv(in_name, out_name, args, extra_opts, cpu = -1, mem = -1):
     clam_args = [ getClamProv(), in_name, '-oll', out_name]
     clam_args = clam_args + extra_opts
@@ -622,9 +642,6 @@ def clamProv(in_name, out_name, args, extra_opts, cpu = -1, mem = -1):
     # this might create unwanted aliasing scenarios
     # for now, there is no option to undo this switch
     clam_args.append('--simplifycfg-sink-common=false')
-
-    if verbose:
-        print('clam command: ' + ' '.join(clam_args))
 
     if args.log is not None:
         for l in args.log.split(':'): clam_args.extend(['-log', l])
@@ -637,25 +654,22 @@ def clamProv(in_name, out_name, args, extra_opts, cpu = -1, mem = -1):
 
     if args.debug_pass:
         clam_args.append('--debug-pass=Structure')
-
+        
     if args.print_sources_sinks:
         clam_args.append('--print-sources-sinks')
     else:
-        
         if args.input_config is not None:
             clam_args.append('--add-metadata-config={0}'.format(args.input_config))
-
         if args.dependency_map is not None:
             clam_args.append('--dependency-map-file={0}'.format(args.dependency_map))
-
-    if args.enable_recursive:
-        clam_args.append('--enable-recursive')
-    if args.enable_warnings:
-        clam_args.append('--enable-warnings')
-    if args.print_invariants:
-        clam_args.append('--print-invariants')
-    if args.verbose > 0:
-        clam_args.append('--verbose={0}'.format(args.verbose))
+        if args.enable_recursive:
+            clam_args.append('--enable-recursive')
+        if args.enable_warnings:
+            clam_args.append('--enable-warnings')
+        if args.print_invariants:
+            clam_args.append('--print-invariants')
+        if args.verbose > 0:
+            clam_args.append('--verbose={0}'.format(args.verbose))
         
     if verbose:
         print('clam-prov command: ' + ' '.join(clam_args))
@@ -708,6 +722,11 @@ def main(argv):
     pp_out = defPPName(in_name, workdir)
     if pp_out != in_name:
         with stats.timer('ClamPP'):
+            if args.add_main:
+                out = defMainPPName(in_name, workdir)
+                ## add main if none
+                addMain(in_name, out)
+                in_name = out
             clamPP(in_name, pp_out, args=args, cpu=args.cpu, mem=args.mem)
     in_name = pp_out
 
