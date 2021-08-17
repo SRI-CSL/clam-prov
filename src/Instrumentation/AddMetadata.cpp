@@ -161,7 +161,7 @@ static bool loadInputFile(Module &M, std::string inputFilePath) {
                  << "' with non-numeric function parameter index\n";
           continue;
         }
-        if (paramInfo.index.sle(0)) {
+        if (paramInfo.index.sle(-1)) {
           errs() << "Skipped line '" << line
                  << "' with non-positive function parameter index\n";
           continue;
@@ -188,7 +188,6 @@ static bool loadInputFile(Module &M, std::string inputFilePath) {
       description\n"; continue;
       }
       */
-
       functionInfo->paramInfos.push_back(paramInfo);
     } else {
       errs() << "Skipped unexpected line: '" << line
@@ -225,10 +224,15 @@ static bool conditionalUpdate(Instruction *current, Module &module) {
     for (struct ParamInfo &paramInfo : functionInfo->paramInfos) {
       Value *operand = nullptr;
       if (paramInfo.useIndex == true) {
-        if (paramInfo.index.uge(callBase->arg_size())) {
+        if (paramInfo.index.sge(callBase->arg_size())) {
           continue; // Skip
         }
-        operand = callBase->getArgOperand(paramInfo.index.getZExtValue());
+        int64_t paramIndex = paramInfo.index.getSExtValue();
+        if(paramIndex == -1){
+          operand = callBase;
+        }else{
+          operand = callBase->getArgOperand(paramIndex);
+        }
       } else {
         // Use debug info to get the right operand later
       }
@@ -239,7 +243,7 @@ static bool conditionalUpdate(Instruction *current, Module &module) {
       std::string paramKey;
 
       if (paramInfo.useIndex == true) {
-        paramKey = std::to_string(paramInfo.index.getZExtValue() + 1);
+        paramKey = std::to_string(paramInfo.index.getSExtValue() + 1);
         // get param name from debug info later. Using index for now.
       } else {
         paramKey = std::string(&paramInfo.name[0]);

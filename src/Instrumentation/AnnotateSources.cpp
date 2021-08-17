@@ -77,7 +77,12 @@ bool addSources::runOnFunction(Function &F) {
           if (getCallSiteArgumentMetadata(i, *CB, callId, callArg, argumentMetadata)) {
             if (getArgumentMetadataType(argumentMetadata, isInput)) {
               if (isInput) {
-		Value *Ptr = CB->getArgOperand(callArg - 1);
+                Value *Ptr = nullptr;
+                if(callArg == 0){
+                  Ptr = CB;
+                }else{
+                  Ptr = CB->getArgOperand(callArg - 1);
+                }
 		if (!isPointerNull(*Ptr)) { // bail out if Ptr is the null constant
 		  Changed = true;
 		  insertClamAddTag(callId, *Ptr, CB);
