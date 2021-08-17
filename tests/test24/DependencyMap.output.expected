@@ -1,0 +1,3 @@
+call-site,mmap,0
+call-site,write,1
+tags,write,0
