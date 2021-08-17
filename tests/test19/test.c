@@ -1,4 +1,4 @@
-// RUN: %clam-prov %s --add-metadata-config=%tests/test19/AddMetadata.config --dependency-map-file=%T/DependencyMap.output
+// RUN: %clam-prov %s --add-metadata-config=%tests/test19/AddMetadata.config --dependency-map-file=%T/DependencyMap.output --enable-recursive=true
 // RUN: %cmp %T/DependencyMap.output %tests/test19/DependencyMap.output.expected && echo "OK" > %T/result.txt || echo "FAIL" > %T/result.txt
 // RUN: cat %T/result.txt | FileCheck %s
 // CHECK: OK

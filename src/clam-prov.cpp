@@ -26,6 +26,7 @@
 #include "seadsa/AllocWrapInfo.hh"
 #include "seadsa/DsaLibFuncInfo.hh"
 #include "seadsa/support/RemovePtrToInt.hh"
+#include "seadsa/support/Debug.h"
 
 // Clam
 #include "clam/CfgBuilder.hh"
@@ -66,13 +67,57 @@ static llvm::cl::opt<std::string>
 
 static llvm::cl::opt<std::string>
     AsmOutputFilename("oll", llvm::cl::desc("Output analyzed bitcode"),
-                      llvm::cl::init(""), llvm::cl::value_desc("filename"));
+                      llvm::cl::init(""), llvm::cl::value_desc("filename"),
+		      llvm::cl::cat(ClamProvOpts));
 
 
 static llvm::cl::opt<bool>
     PrintSourcesSinks("print-sources-sinks",
 		      llvm::cl::desc("Print sources (input) and sinks (output)"),
-		      llvm::cl::init(false));
+		      llvm::cl::init(false),
+		      llvm::cl::cat(ClamProvOpts));
+
+static llvm::cl::opt<bool>
+    Recursive("enable-recursive",
+	      llvm::cl::desc("Precise analysis of recursive calls (default false)"),
+	      llvm::cl::init(false),
+	      llvm::cl::cat(ClamProvOpts));
+
+static llvm::cl::opt<bool>
+    EnableWarnings("enable-warnings",
+		   llvm::cl::desc("Enable warning messages (default false)"),
+		   llvm::cl::init(false),
+		   llvm::cl::cat(ClamProvOpts));
+
+
+static llvm::cl::opt<bool>
+    PrintInvariants("print-invariants",
+		    llvm::cl::desc("Print invariants (default false)"),
+		    llvm::cl::init(false),
+		    llvm::cl::cat(ClamProvOpts));
+
+static llvm::cl::opt<unsigned>
+    Verbosity("verbose",
+	      llvm::cl::desc("Level of verbosity (default 0)"),
+	      llvm::cl::init(0),
+	      llvm::cl::cat(ClamProvOpts));
+
+struct LogOpt {
+  void operator=(const std::string &tag) const {
+     crab::CrabEnableLog(tag);
+     seadsa::SeaDsaEnableLog(tag);
+  } 
+};
+
+LogOpt Logloc;
+
+static llvm::cl::opt<LogOpt, true, llvm::cl::parser<std::string>> 
+LogClOption("log",
+             llvm::cl::desc("Enable specified log level"),
+             llvm::cl::location(Logloc),
+             llvm::cl::value_desc("string"),
+             llvm::cl::ValueRequired, llvm::cl::ZeroOrMore);
+
 
 // -- Set up an abstract domain specialized to perform tag analysis
 namespace clam {
@@ -260,14 +305,14 @@ int main(int argc, char *argv[]) {
     aparams.dom = CrabDomain::TAG_INTERVALS;
     aparams.run_inter = true;
     // TODO: make this command-line option
-    aparams.analyze_recursive_functions = true;
+    aparams.analyze_recursive_functions = Recursive;
     aparams.store_invariants = true;
-    aparams.print_invars = true;
+    aparams.print_invars = PrintInvariants;
     // disable Clam/Crab warnings
-    crab::CrabEnableWarningMsg(false);
+    crab::CrabEnableWarningMsg(EnableWarnings);
     // for debugging only
-    // crab::CrabEnableVerbosity(1);
-    // to print tags
+    crab::CrabEnableVerbosity(Verbosity);
+    // to print always tags
     crab::CrabEnableLog("region-print");
     /// Create an inter-analysis instance
     std::unique_ptr<InterGlobalClam> clam(new InterGlobalClam(*module, man));

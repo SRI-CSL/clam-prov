@@ -275,9 +275,24 @@ def parseArgs(argv):
     p.add_argument('--dependency-map-file',
                    help='Results of the Tag analysis',
                    dest='dependency_map', type=str, metavar='FILE')
+    p.add_argument('--log', dest='log', default=None,
+                    metavar='STR', help='Log level for clam')
     add_bool_argument(p, 'print-sources-sinks',
                       help='Print info about sources/sinks and exit',
-                      dest='print_sources_sinks', default=False)        
+                      dest='print_sources_sinks', default=False)
+    add_bool_argument(p, 'enable-recursive',
+                      help='Precise analysis of recursive calls (default false)',
+                      dest='enable_recursive', default=False)
+    add_bool_argument(p, 'enable-warnings',
+                      help='Enable warnings messages (default false)',
+                      dest='enable_warnings', default=False)
+    add_bool_argument(p, 'print-invariants',
+                      help='Print invariants (default false)',
+                      dest='print_invariants', default=False)
+    p.add_argument('--verbose',
+                   help='Level of verbosity (default 0)',
+                   dest='verbose', type=int, default=0)
+    
     p.add_argument('file', metavar='FILE', help='Input file')
 
     args = p.parse_args(argv)
@@ -611,6 +626,9 @@ def clamProv(in_name, out_name, args, extra_opts, cpu = -1, mem = -1):
     if verbose:
         print('clam command: ' + ' '.join(clam_args))
 
+    if args.log is not None:
+        for l in args.log.split(':'): clam_args.extend(['-log', l])
+        
     if args.out_name is not None:
         clam_args.append('-o={0}'.format(args.out_name))
 
@@ -630,6 +648,15 @@ def clamProv(in_name, out_name, args, extra_opts, cpu = -1, mem = -1):
         if args.dependency_map is not None:
             clam_args.append('--dependency-map-file={0}'.format(args.dependency_map))
 
+    if args.enable_recursive:
+        clam_args.append('--enable-recursive')
+    if args.enable_warnings:
+        clam_args.append('--enable-warnings')
+    if args.print_invariants:
+        clam_args.append('--print-invariants')
+    if args.verbose > 0:
+        clam_args.append('--verbose={0}'.format(args.verbose))
+        
     if verbose:
         print('clam-prov command: ' + ' '.join(clam_args))
             
