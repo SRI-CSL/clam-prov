@@ -4,6 +4,8 @@
  * Run Clam (https://github.com/seahorn/clam) to perform tag analysis
  * (https://github.com/seahorn/clam/wiki/TagAnalysis).
  **/
+#include "config.h"
+
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -39,7 +41,11 @@
 #include "clam/Support/NameValues.hh"
 
 #include "crab/domains/flat_boolean_domain.hpp"
+#ifdef HAS_FAST_REGION_DOMAIN
+#include "crab/domains/region_without_ghost_domain.hpp"
+#else
 #include "crab/domains/region_domain.hpp"
+#endif 
 
 #include "./Instrumentation/AddMetadata.h"
 #include "./Instrumentation/AnnotateSources.h"
@@ -133,6 +139,7 @@ constexpr Type TAG_INTERVALS(1, "intervals", "intervals", false, false);
 } // namespace CrabDomain
 
 /* Configuration of the region domain to perform tag analysis */
+#ifndef HAS_FAST_REGION_DOMAIN  
 using domvar_allocator = crab::var_factory_impl::str_var_alloc_col;
 using dom_varname_t = domvar_allocator::varname_t;
 template <class BaseAbsDom> class RegionParams {
@@ -147,11 +154,23 @@ public:
   enum { refine_uninitialized_regions = 0 };
   enum { tag_analysis = 1 };
 };
-
 using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
     ikos::interval_domain<clam::number_t, dom_varname_t>>;
 using tag_analysis_with_interval_domain_t =
     crab::domains::region_domain<RegionParams<base_interval_domain_t>>;
+#else
+class FastRegionParams {
+public:
+  enum { allocation_sites = 0 };
+  enum { deallocation = 0 };
+  enum { refine_uninitialized_regions = 0 };
+  enum { tag_analysis = 1 };
+};
+using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
+  ikos::interval_domain<clam::number_t, clam::varname_t>>;
+using tag_analysis_with_interval_domain_t =  
+  crab::domains::region_without_ghost_domain<base_interval_domain_t, FastRegionParams>;  
+#endif 
 
 REGISTER_DOMAIN(CrabDomain::TAG_INTERVALS, tag_analysis_with_interval_domain_t)
 } // namespace clam
