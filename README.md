@@ -81,11 +81,19 @@ To run some regression tests:
 
 ## Usage ##
 
-     clam-prov.py  test.c --add-metadata-config=addMetadata.config -o test.prov.bc
-
+     clam-prov.py  test.c -o test.prov.bc
+     
+By default, `clam-prov.py` uses the file `config/sources-sinks.config`
+from the install directory to know which are the sources and sinks.
 The output bitcode file `test.prov.bc` contains `call-site-metadata`
 metadata indicating the tags assigned to both sources (e.g., read
 calls) and sinks (e.g., write calls).
+
+If we want to use a different set of sources and sinks then use the
+command:
+
+     clam-prov.py  test.c --add-metadata-config=addMetadata.config -o test.prov.bc
+     
 
 ## Output Propagated Tags ##
 

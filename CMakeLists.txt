@@ -161,6 +161,11 @@ else()
 endif()
 
 
+
+set(CLAM_PROV_ROOT ${CMAKE_INSTALL_PREFIX})
+configure_file(py/clam-prov.py.in clam-prov.py @ONLY)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/clam-prov.py  DESTINATION bin)
+
 configure_file(src/config.h.cmake ${CMAKE_BINARY_DIR}/src/config.h)
 include_directories(${CMAKE_BINARY_DIR}/src)
 add_subdirectory(src)

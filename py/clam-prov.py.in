@@ -21,8 +21,7 @@ import sys
 import tempfile
 import threading
 
-
-root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+root="@CLAM_PROV_ROOT@"
 verbose = True
 running_process = None
 
@@ -274,7 +273,9 @@ def parseArgs(argv):
                       dest='add_main', default=False)
     p.add_argument('--add-metadata-config',
                    help='File to mark sources and sinks for the Tag analysis',
-                   dest='input_config', type=str, metavar='FILE')
+                   dest='input_config', type=str,
+                   default=os.path.join(root,'config/sources-sinks.config'),
+                   metavar='FILE')
     p.add_argument('--dependency-map-file',
                    help='Results of the Tag analysis',
                    dest='dependency_map', type=str, metavar='FILE')
@@ -322,12 +323,7 @@ def createWorkDir(dname = None, save = False):
     return workdir
 
 def getClamPP():
-    clamPP_cmd = None
-    if 'CLAMPP' in os.environ:
-        clamPP_cmd = os.environ ['CLAMPP']
-    if not isexec(clamPP_cmd):
-        clamPP_cmd = os.path.join(root, "bin/clam-pp")
-    if not isexec(clamPP_cmd): clamPP_cmd = which('clam-pp')
+    clamPP_cmd = os.path.join(root, "bin/clam-pp")
     if not isexec(clamPP_cmd):
         raise IOError("Cannot find clam pre-processor")
     return clamPP_cmd
@@ -359,23 +355,17 @@ def getClang(is_plus_plus):
 # return a pair: the first element is the command and the second is a
 # bool that it is true if seaopt has been found.
 def getOptLlvm ():
-    cmd_name = which (['seaopt'])
-    if cmd_name is not None:
+    cmd_name = os.path.join(root, "bin/seaopt")
+    if isexec(clam_cmd):
         return (cmd_name, True)
 
-    cmd_name = which (['opt-mp-' + llvm_version, 'opt-' + llvm_version, 'opt'])
+    cmd_name = which(['opt-mp-' + llvm_version, 'opt-' + llvm_version, 'opt'])
     if cmd_name is None:
         raise IOError ('neither seaopt nor opt where found')
     return (cmd_name, False)
 
 def getClamProv():
-    clam_cmd = None
-    if 'CLAMPROV' in os.environ:
-        clam_cmd = os.environ ['CLAMPROV']
-    if not isexec(clam_cmd):
-        clam_cmd = os.path.join(root, "bin/clam-prov")
-    if not isexec(clam_cmd):
-        clam_cmd = which('clam-prov')
+    clam_cmd = os.path.join(root, "bin/clam-prov")
     if not isexec(clam_cmd):
         raise IOError("Cannot find clam-prov")
     return clam_cmd
