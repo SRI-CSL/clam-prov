@@ -14,7 +14,7 @@ WrapSinks::WrapSinks()
     : ModulePass(ID), m_int8PtrTy(nullptr), m_seadsaModified(nullptr) {}
 
 FunctionCallee WrapSinks::createWrapper(CallBase &CB) {
-  assert(CB->getCalledFunction());
+  assert(CB.getCalledFunction());
 
   Function &F = *(CB.getCalledFunction());
   Module &M = *(F.getParent());
