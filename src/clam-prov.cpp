@@ -41,6 +41,7 @@
 #include "clam/Support/NameValues.hh"
 
 #include "crab/domains/flat_boolean_domain.hpp"
+#include "crab/domains/abstract_domain_params.hpp"
 #ifdef HAS_FAST_REGION_DOMAIN
 #include "crab/domains/region_without_ghost_domain.hpp"
 #else
@@ -149,10 +150,6 @@ public:
   using varname_allocator_t = domvar_allocator;
   using base_abstract_domain_t = BaseAbsDom;
   using base_varname_t = typename BaseAbsDom::varname_t;
-  enum { allocation_sites = 0 };
-  enum { deallocation = 0 };
-  enum { refine_uninitialized_regions = 0 };
-  enum { tag_analysis = 1 };
 };
 using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
     ikos::interval_domain<clam::number_t, dom_varname_t>>;
@@ -344,6 +341,14 @@ int main(int argc, char *argv[]) {
     crab::CrabEnableVerbosity(Verbosity);
     // to print always tags
     crab::CrabEnableLog("region-print");
+    // set parameters for region domain
+    crab::domains::region_domain_params p(false/*allocation_sites*/,
+					  false/*deallocation*/,
+					  false/*refine_uninitialized_regions*/,
+					  true/*tag_analysis*/,
+					  false/*is_dereferenceable*/,
+					  true/*skip_unknown_regions*/);
+    crab::domains::crab_domain_params_man::get().update_params(p);
     /// Create an inter-analysis instance
     std::unique_ptr<InterGlobalClam> clam(new InterGlobalClam(*module, man));
     
