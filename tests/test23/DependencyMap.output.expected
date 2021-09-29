@@ -1,7 +1,7 @@
 digraph clam_prov_dependency_map{
 "0" [label="function name:read\ncall site:0"];
+"3" [label="function name:write\ncall site:3"];
 "2" [label="function name:write\ncall site:2"];
-"2" -> "0" [label="WasDependentOn"];
 "1" [label="function name:write\ncall site:1"];
 "1" -> "0" [label="WasDependentOn"];
 }

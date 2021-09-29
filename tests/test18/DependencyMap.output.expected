@@ -1,3 +1,5 @@
-call-site,read,0
-call-site,write,1
-tags,write,0
+digraph clam_prov_dependency_map{
+"0" [label="function name:read\ncall site:0"];
+"1" [label="function name:write\ncall site:1"];
+"1" -> "0" [label="WasDependentOn"];
+}

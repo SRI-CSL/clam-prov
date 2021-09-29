@@ -37,6 +37,8 @@ bool OutputDependencyMap::runOnModule(Module &module) {
     return false;
   }
 
+  outputFile << "digraph clam_prov_dependency_map{\n";
+
   LLVMContext &llvmContext = module.getContext();
   for (Function &function : module) {
     for (BasicBlock &basicBlock : function) {
@@ -49,17 +51,15 @@ bool OutputDependencyMap::runOnModule(Module &module) {
             MDNode *callSiteNode = nullptr;
             long long callSiteId;
             if (getCallSiteMetadata(*callBase, callSiteNode, callSiteId)) {
-              outputFile << "call-site," << function->getName().data() << "," << callSiteId << "\n";
+              outputFile << "\"" << callSiteId << "\" [label=\"function name:" << function->getName().data() << "\\ncall site:" << callSiteId << "\"];\n";
             }
 
             // output
             SmallVector<long long, 16> tagVector;
             if (getClamProvTags(*callBase, tagVector)) {
-              outputFile << "tags," << function->getName().data();
               for (long long tag : tagVector) {
-                outputFile << "," << tag;
+                outputFile << "\"" << callSiteId << "\" -> \"" << tag << "\" [label=\"WasDependentOn\"];\n";
               }
-              outputFile << "\n";
             }
 
           }
@@ -68,6 +68,8 @@ bool OutputDependencyMap::runOnModule(Module &module) {
       }
     }
   }
+
+  outputFile << "}\n";
 
   outputFile.close();
 

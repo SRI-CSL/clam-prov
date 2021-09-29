@@ -1,2 +1,4 @@
-call-site,read,0
-call-site,write,1
+digraph clam_prov_dependency_map{
+"0" [label="function name:read\ncall site:0"];
+"1" [label="function name:write\ncall site:1"];
+}

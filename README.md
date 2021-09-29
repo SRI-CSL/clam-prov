@@ -98,26 +98,29 @@ command:
 ## Output Propagated Tags ##
 
 Alternatively, the same information provided by LLVM metadata
-`call-site-metadata` can be printed into a text file. The tags
+`call-site-metadata` can be printed to a file in [DOT](https://graphviz.org/doc/info/lang.html) format. The tags
 propagated to sinks from sources can be outputted using the argument
 `dependency-map-file` as follows:
 
-     clam-prov.py test.c --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.output
+     clam-prov.py test.c --add-metadata-config=addMetadata.config --dependency-map-file=dependency_map.dot
 
-Following is an excerpt from the output file `dependency_map.output`:
+Following is an example output file `dependency_map.dot`:
 
 ```
-call-site,read,0
-call-site,read,1
-call-site,write,2
-tags,write,0,1
+digraph clam_prov_dependency_map{
+"0" [label="function name:read\ncall site:0"];
+"1" [label="function name:read\ncall site:1"];
+"2" [label="function name:write\ncall site:2"];
+"2" -> "0" [label="WasDependentOn"];
+"2" -> "1" [label="WasDependentOn"];
+}
 ```
 
 The output above says the following:
-* First call-site `read` has the tag `0`
-* Second call-site `read` has the tag `1`
-* Third call-site `write` has the tag `2`
-* The third call-site (`write`) has the propagated tags `0`, and `1`. A line that starts with `tags` always refer to the call-site from the previous line.
+* First call-site `read` has the call site tag `0`
+* Second call-site `read` has the call site tag `1`
+* Third call-site `write` has the call site tag `2`
+* The third call-site (`write`) has the propagated call site tags `0`, and `1`.
 
 ## Log call-sites (Linux) ##
 

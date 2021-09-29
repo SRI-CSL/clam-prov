@@ -1,10 +1,15 @@
-call-site,read,0
-call-site,read,1
-call-site,read,2
-call-site,read,3
-call-site,read,4
-call-site,read,5
-call-site,read,6
-call-site,read,7
-call-site,write,8
-tags,write,0,2,4,6
+digraph clam_prov_dependency_map{
+"0" [label="function name:read\ncall site:0"];
+"1" [label="function name:read\ncall site:1"];
+"2" [label="function name:read\ncall site:2"];
+"3" [label="function name:read\ncall site:3"];
+"4" [label="function name:read\ncall site:4"];
+"5" [label="function name:read\ncall site:5"];
+"6" [label="function name:read\ncall site:6"];
+"7" [label="function name:read\ncall site:7"];
+"8" [label="function name:write\ncall site:8"];
+"8" -> "0" [label="WasDependentOn"];
+"8" -> "2" [label="WasDependentOn"];
+"8" -> "4" [label="WasDependentOn"];
+"8" -> "6" [label="WasDependentOn"];
+}
