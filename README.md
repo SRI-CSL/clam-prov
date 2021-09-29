@@ -134,7 +134,15 @@ The above specifies the file `call-site-logging.config` to configure how to log 
 * `output_mode` - Whether to write to a file (at `~/.clam-prov/audit.log`) or to a pipe (at `~/.clam-prov/audit.pipe`). Specify `0` to write to the file, or specify `1` to write to the pipe
 * `max_records` - The maximum call-site records to buffer before writing to the file or the pipe
 
-The output is written in binary format as the `clam-prov-record` [struct](https://github.com/SRI-CSL/clam-prov/blob/master/src/Logging/clam-prov-logger.h#L32).
+The output is written as a series of records in binary format. Each record contains the following fields in the given order:
+
+* `time in milliseconds` expressed as an unsigned long (8 bytes)
+* `process id` expressed as an integer (4 bytes)
+* `call site tag` expressed as a signed long (8 bytes)
+* `function return value` expressed as a signed long (8 bytes)
+* `name of the function` expressed as a char array (256 bytes)
+
+The source file [CallSiteLogReader.c](https://github.com/SRI-CSL/clam-prov/blob/master/src/Util/CallSiteLogReader.c) demonstrates how to read the call site log file. 
 
 To be able to generate an executable to log call-sites from `test.out.pp.bc` (above), the shared library must be linked as follows:
 

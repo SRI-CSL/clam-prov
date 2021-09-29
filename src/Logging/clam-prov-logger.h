@@ -37,6 +37,12 @@ typedef struct clam_prov_record{
   char function_name[CLAM_PROV_FUNCTION_NAME_LENGTH]; // The name of the function at the call-site
 } clam_prov_record;
 
+#define CLAM_PROV_SIZE_UNSIGNED_LONG sizeof(unsigned long)
+#define CLAM_PROV_SIZE_INT sizeof(int)
+#define CLAM_PROV_SIZE_LONG sizeof(long)
+#define CLAM_PROV_SIZE_FUNCTION_NAME CLAM_PROV_FUNCTION_NAME_LENGTH
+#define CLAM_PROV_SIZE_RECORD (CLAM_PROV_SIZE_UNSIGNED_LONG + CLAM_PROV_SIZE_INT + (2 * CLAM_PROV_SIZE_LONG) + CLAM_PROV_SIZE_FUNCTION_NAME)
+
 // API
 /*
   Copy the absolute path represented by '~/.clam-prov/audit.log' into `dst`. `dst` must be big enough to fit the path.

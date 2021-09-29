@@ -207,6 +207,44 @@ static int clam_prov_open_output(){
 
 // User API
 
+static char* copy_record_to_dst_buffer(char *dst, clam_prov_record *src){
+  int offset = 0;
+  memcpy((void*)(&dst[offset]), (void*)(&src->time), CLAM_PROV_SIZE_UNSIGNED_LONG);
+  offset += CLAM_PROV_SIZE_UNSIGNED_LONG;
+  memcpy((void*)(&dst[offset]), (void*)(&src->pid), CLAM_PROV_SIZE_INT);
+  offset += CLAM_PROV_SIZE_INT;
+  memcpy((void*)(&dst[offset]), (void*)(&src->call_site_id), CLAM_PROV_SIZE_LONG);
+  offset += CLAM_PROV_SIZE_LONG;
+  memcpy((void*)(&dst[offset]), (void*)(&src->exit), CLAM_PROV_SIZE_LONG);
+  offset += CLAM_PROV_SIZE_LONG;
+  memcpy((void*)(&dst[offset]), (void*)(&src->function_name[0]), CLAM_PROV_SIZE_FUNCTION_NAME);
+  offset += CLAM_PROV_SIZE_FUNCTION_NAME;
+  return &dst[offset];
+}
+
+static char* copy_records_to_dst_buffer(char *dst, int total_records){
+  int current_record_index;
+
+  current_record_index = 0;
+
+  for(; current_record_index < total_records; current_record_index++){
+    dst = copy_record_to_dst_buffer(dst, &clam_prov_records[current_record_index]);
+  }
+  return dst;
+}
+
+static int get_dst_buffer_size(int total_records){
+  return CLAM_PROV_SIZE_RECORD * total_records;
+}
+
+static char* alloc_dst_buffer(int dst_buffer_size){
+  return (char*)malloc(sizeof(char) * dst_buffer_size);
+}
+
+static void free_dst_buffer(char *dst){
+  free(dst);
+}
+
 static int clam_prov_logging_check_and_flush_concrete(int force){
   int flush;
   flush = 0;
@@ -226,18 +264,27 @@ static int clam_prov_logging_check_and_flush_concrete(int force){
   }// TIME check, too TODO
 
   if(flush == 1){
+    int total_records;
+    int dst_buffer_size;
+    char *dst;
     int written_bytes;
-    int bytes_to_write;
 
-    bytes_to_write = sizeof(clam_prov_record) * clam_prov_record_index;
-    flock(clam_prov_logger_output_fd, LOCK_EX);
-    written_bytes = write(clam_prov_logger_output_fd, (void *)(&clam_prov_records[0]), bytes_to_write);
-    if(written_bytes > 0){
-      fsync(clam_prov_logger_output_fd);
+    total_records = clam_prov_record_index;
+    dst_buffer_size = get_dst_buffer_size(total_records);
+    dst = alloc_dst_buffer(dst_buffer_size);
+    if(dst != NULL){
+      copy_records_to_dst_buffer(dst, total_records);
+      flock(clam_prov_logger_output_fd, LOCK_EX);
+      written_bytes = write(clam_prov_logger_output_fd, (void*)(dst), dst_buffer_size);
+      if(written_bytes > 0){
+        fsync(clam_prov_logger_output_fd);
+      }
+      flock(clam_prov_logger_output_fd, LOCK_UN);
+      free_dst_buffer(dst);
     }
-    flock(clam_prov_logger_output_fd, LOCK_UN);
+
     clam_prov_record_index = 0;
-    if(bytes_to_write != written_bytes){
+    if(dst_buffer_size != written_bytes){
       // something went wrong TODO
       return 0;
     }
@@ -357,6 +404,8 @@ static int clam_prov_logging_shutdown_concrete(){
   if(clam_prov_logging_is_inited == 0){
     return 0; // Not initialized
   }
+
+  clam_prov_logging_check_and_flush(1);
 
   clam_prov_do_cleanup();
 
