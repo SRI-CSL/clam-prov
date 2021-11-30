@@ -11,12 +11,25 @@ In the output, the second `write` call is incorrectly dependent on the `read` ca
 
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 void read(char *i){}
 void write(char *o){}
+
+
+int nd_int(){
+  srand(time(NULL));
+  return rand() ;
+}
+
 
 int main(int argc, char *argv[]){
   char i1, i2, o;
 
+  // Avoid undefined behavior
+  i2 = (char)((uint64_t)nd_int());
   read(&i1);
 
   o = i1;
