@@ -156,17 +156,10 @@ using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
 using tag_analysis_with_interval_domain_t =
     crab::domains::region_domain<RegionParams<base_interval_domain_t>>;
 #else
-class FastRegionParams {
-public:
-  enum { allocation_sites = 0 };
-  enum { deallocation = 0 };
-  enum { refine_uninitialized_regions = 0 };
-  enum { tag_analysis = 1 };
-};
 using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
   ikos::interval_domain<clam::number_t, clam::varname_t>>;
 using tag_analysis_with_interval_domain_t =  
-  crab::domains::region_without_ghost_domain<base_interval_domain_t, FastRegionParams>;  
+  crab::domains::region_without_ghost_domain<base_interval_domain_t>;  
 #endif 
 
 REGISTER_DOMAIN(CrabDomain::TAG_INTERVALS, tag_analysis_with_interval_domain_t)
