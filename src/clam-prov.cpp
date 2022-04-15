@@ -140,30 +140,25 @@ constexpr Type TAG_INTERVALS(1, "intervals", "intervals", false, false);
 } // namespace CrabDomain
 
 /* Configuration of the region domain to perform tag analysis */
-#ifndef HAS_FAST_REGION_DOMAIN  
-using domvar_allocator = crab::var_factory_impl::str_var_alloc_col;
-using dom_varname_t = domvar_allocator::varname_t;
 template <class BaseAbsDom> class RegionParams {
 public:
   using number_t = clam::number_t;
   using varname_t = clam::varname_t;
-  using varname_allocator_t = domvar_allocator;
+  using varname_allocator_t = typename varname_t::variable_factory_t;
   using base_abstract_domain_t = BaseAbsDom;
   using base_varname_t = typename BaseAbsDom::varname_t;
 };
 using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
-    ikos::interval_domain<clam::number_t, dom_varname_t>>;
+  ikos::interval_domain<clam::number_t, clam::varname_t>>;
 using tag_analysis_with_interval_domain_t =
     crab::domains::region_domain<RegionParams<base_interval_domain_t>>;
-#else
-using base_interval_domain_t = crab::domains::flat_boolean_numerical_domain<
-  ikos::interval_domain<clam::number_t, clam::varname_t>>;
-using tag_analysis_with_interval_domain_t =  
-  crab::domains::region_without_ghost_domain<base_interval_domain_t>;  
-#endif 
-
-REGISTER_DOMAIN(CrabDomain::TAG_INTERVALS, tag_analysis_with_interval_domain_t)
 } // namespace clam
+
+static void registerDomain() {
+  auto &map = DomainRegistry::getFactoryMap();		
+  clam::clam_abstract_domain val(std::move(clam::tag_analysis_with_interval_domain_t()));	
+  map.insert({clam::CrabDomain::TAG_INTERVALS, val});	       
+}
 
 static void preTagAnalysis(Module &M) {
   /// === Generic passes ==== ///
@@ -343,6 +338,8 @@ int main(int argc, char *argv[]) {
 					  true/*skip_unknown_regions*/);
     crab::domains::crab_domain_params_man::get().update_params(p);
     /// Create an inter-analysis instance
+    // register the domain before creating an InterGlobalClam instance  
+    registerDomain();
     std::unique_ptr<InterGlobalClam> clam(new InterGlobalClam(*module, man));
     
     /// 3. Run the Crab analysis
