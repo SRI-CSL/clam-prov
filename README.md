@@ -63,14 +63,8 @@ This says that the second parameter of call to `write` (identifier
 
 ## Compilation and Installation ##
 
-```
-mkdir build && cd build
-cmake ..
-cmake --build . --target clam-seadsa && cmake ..
-cmake --build . --target clam-seallvm && cmake ..
-cmake --build . --target clam-src && cmake ..
-cmake --build . --target crab && cmake ..
-cmake --build . --target install
+``` bash
+./install.sh
 ```
 
 ## Checking installation ## 

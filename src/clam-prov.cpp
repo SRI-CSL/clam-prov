@@ -42,11 +42,7 @@
 
 #include "crab/domains/flat_boolean_domain.hpp"
 #include "crab/domains/abstract_domain_params.hpp"
-#ifdef HAS_FAST_REGION_DOMAIN
-#include "crab/domains/region_without_ghost_domain.hpp"
-#else
 #include "crab/domains/region_domain.hpp"
-#endif 
 
 #include "./Instrumentation/AddMetadata.h"
 #include "./Instrumentation/AnnotateSources.h"
@@ -332,7 +328,6 @@ int main(int argc, char *argv[]) {
     // set parameters for region domain
     crab::domains::region_domain_params p(false/*allocation_sites*/,
 					  false/*deallocation*/,
-					  false/*refine_uninitialized_regions*/,
 					  true/*tag_analysis*/,
 					  false/*is_dereferenceable*/,
 					  true/*skip_unknown_regions*/);
